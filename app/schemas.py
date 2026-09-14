@@ -53,3 +53,36 @@ class ProblemPublic(SQLModel):
     status: str
     created_at: datetime
     updated_at: datetime
+
+
+class WrongQuestionCreate(SQLModel):
+    title: str
+    source: str = ""
+    wrong_reason: str = ""
+    correct_solution: str = ""
+    review_count: int = 0
+    mastered: bool = False
+
+
+class WrongQuestionUpdate(SQLModel):
+    """部分更新：所有字段可选，只改前端传回来的那几个。"""
+
+    title: Optional[str] = None
+    source: Optional[str] = None
+    wrong_reason: Optional[str] = None
+    correct_solution: Optional[str] = None
+    review_count: Optional[int] = None
+    mastered: Optional[bool] = None
+
+
+class WrongQuestionPublic(SQLModel):
+    id: int
+    user_id: int
+    title: str
+    source: str
+    wrong_reason: str
+    correct_solution: str
+    review_count: int
+    mastered: bool
+    created_at: datetime
+    updated_at: datetime

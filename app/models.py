@@ -29,3 +29,18 @@ class Problem(SQLModel, table=True):
     status: str = "todo"  # todo | doing | done
     created_at: datetime = Field(default_factory=_now)
     updated_at: datetime = Field(default_factory=_now)
+
+
+class WrongQuestion(SQLModel, table=True):
+    """错题本模块 —— 套用题目(problems)模块的隔离模板复制而来。"""
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(index=True, foreign_key="user.id")  # 隔离的核心字段
+    title: str = Field(index=True)  # 题目标题
+    source: str = ""  # 来源，如 LeetCode #1 / 牛客
+    wrong_reason: str = ""  # 错误原因
+    correct_solution: str = ""  # 正确解法
+    review_count: int = 0  # 复盘次数
+    mastered: bool = False  # 是否已掌握
+    created_at: datetime = Field(default_factory=_now)
+    updated_at: datetime = Field(default_factory=_now)

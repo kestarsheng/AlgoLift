@@ -15,7 +15,7 @@ from .auth import (
     verify_password,
 )
 from .db import create_db_and_tables, get_db
-from .models import Problem, User
+from .models import Problem, User, WrongQuestion
 from .schemas import (
     ProblemCreate,
     ProblemPublic,
@@ -23,6 +23,9 @@ from .schemas import (
     UserCreate,
     UserLogin,
     UserPublic,
+    WrongQuestionCreate,
+    WrongQuestionPublic,
+    WrongQuestionUpdate,
 )
 
 COOKIE_NAME = "access_token"
@@ -178,6 +181,77 @@ def delete_problem(
     if not problem or problem.user_id != user.id:
         raise HTTPException(status_code=404, detail="题目不存在")
     db.delete(problem)
+    db.commit()
+    return {"ok": True}
+
+
+# ---------------- 错题本模块（隔离 CRUD，照题目模块模板复制）----------------
+@app.get("/api/wrong-questions", response_model=list[WrongQuestionPublic])
+def list_wrong_questions(
+    db: Session = Depends(get_db), user: User = Depends(get_current_user)
+):
+    return db.exec(
+        select(WrongQuestion)
+        .where(WrongQuestion.user_id == user.id)
+        .order_by(WrongQuestion.created_at.desc())
+    ).all()
+
+
+@app.post("/api/wrong-questions", response_model=WrongQuestionPublic, status_code=201)
+def create_wrong_question(
+    data: WrongQuestionCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    # 隔离：user_id 由后端从 JWT 取，前端不可伪造
+    wq = WrongQuestion(user_id=user.id, **data.model_dump())
+    db.add(wq)
+    db.commit()
+    db.refresh(wq)
+    return wq
+
+
+@app.get("/api/wrong-questions/{wq_id}", response_model=WrongQuestionPublic)
+def get_wrong_question(
+    wq_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    wq = db.get(WrongQuestion, wq_id)
+    if not wq or wq.user_id != user.id:
+        raise HTTPException(status_code=404, detail="错题不存在")
+    return wq
+
+
+@app.patch("/api/wrong-questions/{wq_id}", response_model=WrongQuestionPublic)
+def update_wrong_question(
+    wq_id: int,
+    data: WrongQuestionUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    wq = db.get(WrongQuestion, wq_id)
+    if not wq or wq.user_id != user.id:
+        raise HTTPException(status_code=404, detail="错题不存在")
+    for key, value in data.model_dump(exclude_unset=True).items():
+        setattr(wq, key, value)
+    wq.updated_at = datetime.now(timezone.utc)
+    db.add(wq)
+    db.commit()
+    db.refresh(wq)
+    return wq
+
+
+@app.delete("/api/wrong-questions/{wq_id}")
+def delete_wrong_question(
+    wq_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    wq = db.get(WrongQuestion, wq_id)
+    if not wq or wq.user_id != user.id:
+        raise HTTPException(status_code=404, detail="错题不存在")
+    db.delete(wq)
     db.commit()
     return {"ok": True}
 
