@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AlgoLift · 算法学习工作台</title>
+<style>
+  :root {
+    --bg: #fff7ed;
+    --card: #ffffff;
+    --ink: #431407;
+    --muted: #9a6b4f;
+    --orange: #f97316;
+    --orange-d: #ea580c;
+    --orange-l: #ffedd5;
+    --line: #fed7aa;
+    --green: #16a34a;
+    --red: #dc2626;
+    --blue: #2563eb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+  }
+  .hidden { display: none !important; }
+  .muted { color: var(--muted); font-weight: 400; font-size: 0.85em; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px 22px;
+    box-shadow: 0 6px 20px rgba(234, 88, 12, 0.06);
+  }
+  /* 认证页 */
+  .auth-wrap {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .auth-card { width: 360px; max-width: 100%; }
+  .logo {
+    font-size: 30px; font-weight: 800; text-align: center;
+    color: var(--orange-d); margin-bottom: 4px; letter-spacing: 0.5px;
+  }
+  .sub { text-align: center; color: var(--muted); margin: 0 0 18px; font-size: 14px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .tab {
+    flex: 1; padding: 9px; border: 1px solid var(--line); background: var(--orange-l);
+    border-radius: 10px; cursor: pointer; font-size: 15px; color: var(--muted);
+    font-weight: 600; transition: all .15s;
+  }
+  .tab.active { background: var(--orange); color: #fff; border-color: var(--orange); }
+  /* 表单 */
+  input, select, textarea {
+    width: 100%; padding: 10px 12px; margin-bottom: 12px;
+    border: 1px solid var(--line); border-radius: 10px; font-size: 14px;
+    background: #fffdfb; color: var(--ink); outline: none; transition: border .15s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--orange); }
+  textarea { min-height: 70px; resize: vertical; }
+  .btn-primary {
+    width: 100%; padding: 11px; border: none; border-radius: 10px;
+    background: var(--orange); color: #fff; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: background .15s;
+  }
+  .btn-primary:hover { background: var(--orange-d); }
+  .btn-ghost {
+    padding: 6px 12px; border: 1px solid var(--line); background: #fff;
+    border-radius: 8px; color: var(--orange-d); cursor: pointer; font-size: 13px;
+  }
+  .btn-ghost:hover { background: var(--orange-l); }
+  .btn-danger {
+    padding: 6px 12px; border: 1px solid #fecaca; background: #fff;
+    border-radius: 8px; color: var(--red); cursor: pointer; font-size: 13px;
+  }
+  .btn-danger:hover { background: #fef2f2; }
+  .error { color: var(--red); font-size: 13px; min-height: 18px; text-align: center; }
+  /* 主界面 */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 24px; background: #fff; border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .brand { font-weight: 800; font-size: 20px; color: var(--orange-d); }
+  .user { display: flex; align-items: center; gap: 12px; font-size: 14px; }
+  .container { max-width: 820px; margin: 24px auto; padding: 0 16px; }
+  .container .card { margin-bottom: 20px; }
+  h2 { margin: 0 0 14px; font-size: 18px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+  .grid #p-title, .grid #p-notes { grid-column: 1 / -1; }
+  .grid .btn-primary { grid-column: 1 / -1; }
+  .list { display: flex; flex-direction: column; gap: 12px; }
+  .empty { color: var(--muted); text-align: center; padding: 24px 0; }
+  .p-card {
+    border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px;
+    background: #fffdfb;
+  }
+  .p-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .p-title { font-weight: 700; font-size: 15px; margin-right: auto; }
+  .tag {
+    font-size: 12px; padding: 2px 9px; border-radius: 999px; font-weight: 600;
+  }
+  .diff-easy { background: #dcfce7; color: var(--green); }
+  .diff-medium { background: var(--orange-l); color: var(--orange-d); }
+  .diff-hard { background: #fee2e2; color: var(--red); }
+  .status-todo { background: #e0e7ff; color: var(--blue); }
+  .status-doing { background: #fef9c3; color: #a16207; }
+  .status-done { background: #dcfce7; color: var(--green); }
+  .p-meta { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  .p-meta a { color: var(--blue); }
+  .p-notes {
+    font-size: 13px; color: #7c3a14; background: var(--orange-l);
+    border-radius: 8px; padding: 8px 10px; margin-top: 8px; white-space: pre-wrap;
+  }
+  .p-actions { margin-top: 10px; display: flex; gap: 8px; }
+  @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+  <!-- 认证视图 -->
+  <div id="auth-view" class="auth-wrap">
+    <div class="card auth-card">
+      <div class="logo">AlgoLift</div>
+      <p class="sub">算法学习工作台 · 多用户隔离版</p>
+      <div class="tabs">
+        <button id="tab-login" class="tab active">登录</button>
+        <button id="tab-register" class="tab">注册</button>
+      </div>
+      <form id="auth-form" autocomplete="off">
+        <input id="auth-username" placeholder="用户名" required />
+        <input id="auth-email" type="email" placeholder="邮箱（注册时必填）" style="display:none" />
+        <input id="auth-password" type="password" placeholder="密码" required />
+        <button type="submit" class="btn-primary" id="auth-submit">登录</button>
+        <div id="auth-error" class="error"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 主视图 -->
+  <div id="main-view" class="hidden">
+    <header class="topbar">
+      <div class="brand">AlgoLift</div>
+      <div class="user">
+        <span id="user-name"></span>
+        <button id="logout-btn" class="btn-ghost">退出</button>
+      </div>
+    </header>
+    <main class="container">
+      <section class="card">
+        <h2 id="form-title">添加题目</h2>
+        <form id="problem-form" autocomplete="off">
+          <div class="grid">
+            <input id="p-title" placeholder="题目标题 *" required />
+            <select id="p-difficulty">
+              <option value="easy">简单</option>
+              <option value="medium" selected>中等</option>
+              <option value="hard">困难</option>
+            </select>
+            <input id="p-category" placeholder="分类（如 DP、贪心）" />
+            <input id="p-url" placeholder="题解链接" />
+            <select id="p-status">
+              <option value="todo">待刷</option>
+              <option value="doing">进行中</option>
+              <option value="done">已完成</option>
+            </select>
+            <textarea id="p-notes" placeholder="笔记 / 思路"></textarea>
+            <button type="submit" class="btn-primary" id="p-submit">保存题目</button>
+            <button type="button" class="btn-ghost hidden" id="cancel-edit" style="margin-top:10px">取消编辑</button>
+          </div>
+        </form>
+      </section>
+      <section class="card">
+        <h2>我的题目 <span id="count" class="muted"></span></h2>
+        <div id="problem-list" class="list"></div>
+      </section>
+    </main>
+  </div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const api = (path, opts = {}) =>
+    fetch(path, {
+      credentials: "include", // 自动带 httpOnly Cookie，前端不碰 token
+      headers: { "Content-Type": "application/json" },
+      ...opts,
+    });
+
+  let mode = "login";
+  let editingId = null;
+
+  function showAuth() {
+    $("auth-view").classList.remove("hidden");
+    $("main-view").classList.add("hidden");
+  }
+  function showMain() {
+    $("auth-view").classList.add("hidden");
+    $("main-view").classList.remove("hidden");
+  }
+
+  // ---- 登录 / 注册 Tab ----
+  $("tab-login").onclick = () => { mode = "login"; setTab(); };
+  $("tab-register").onclick = () => { mode = "register"; setTab(); };
+  function setTab() {
+    $("tab-login").classList.toggle("active", mode === "login");
+    $("tab-register").classList.toggle("active", mode === "register");
+    $("auth-email").style.display = mode === "register" ? "block" : "none";
+    $("auth-submit").textContent = mode === "login" ? "登录" : "注册";
+    $("auth-error").textContent = "";
+  }
+
+  // ---- 登录 / 注册提交 ----
+  $("auth-form").onsubmit = async (e) => {
+    e.preventDefault();
+    const username = $("auth-username").value.trim();
+    const password = $("auth-password").value;
+    const email = $("auth-email").value.trim();
+    $("auth-error").textContent = "";
+    try {
+      const res = await api("/api/auth/" + mode, {
+        method: "POST",
+        body: JSON.stringify(
+          mode === "login"
+            ? { username, password }
+            : { username, email, password }
+        ),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || "操作失败");
+      }
+      await afterAuth();
+    } catch (err) {
+      $("auth-error").textContent = err.message;
+    }
+  };
+
+  async function afterAuth() {
+    const me = await (await api("/api/auth/me")).json();
+    $("user-name").textContent = me.username;
+    showMain();
+    resetForm();
+    await loadProblems();
+  }
+
+  $("logout-btn").onclick = async () => {
+    await api("/api/auth/logout", { method: "POST" });
+    showAuth();
+  };
+
+  // ---- 题目 CRUD ----
+  $("problem-form").onsubmit = async (e) => {
+    e.preventDefault();
+    const payload = {
+      title: $("p-title").value.trim(),
+      difficulty: $("p-difficulty").value,
+      category: $("p-category").value.trim(),
+      url: $("p-url").value.trim(),
+      status: $("p-status").value,
+      notes: $("p-notes").value.trim(),
+    };
+    if (!payload.title) return;
+    const url = editingId ? "/api/problems/" + editingId : "/api/problems";
+    const method = editingId ? "PATCH" : "POST";
+    const res = await api(url, { method, body: JSON.stringify(payload) });
+    if (res.ok) {
+      resetForm();
+      await loadProblems();
+    }
+  };
+
+  function resetForm() {
+    editingId = null;
+    $("problem-form").reset();
+    $("form-title").textContent = "添加题目";
+    $("p-submit").textContent = "保存题目";
+    $("cancel-edit").classList.add("hidden");
+  }
+  $("cancel-edit").onclick = resetForm;
+
+  async function loadProblems() {
+    const res = await api("/api/problems");
+    const list = await res.json();
+    $("count").textContent = "(" + list.length + ")";
+    const box = $("problem-list");
+    box.innerHTML = "";
+    if (!list.length) {
+      box.innerHTML = '<p class="empty">还没有题目，先在上面添加一道吧。</p>';
+      return;
+    }
+    list.forEach((p) => box.appendChild(renderCard(p)));
+  }
+
+  function renderCard(p) {
+    const card = document.createElement("div");
+    card.className = "p-card";
+    const diffLabel = { easy: "简单", medium: "中等", hard: "困难" }[p.difficulty] || p.difficulty;
+    const statusLabel = { todo: "待刷", doing: "进行中", done: "已完成" }[p.status] || p.status;
+    card.innerHTML = `
+      <div class="p-head">
+        <span class="p-title">${esc(p.title)}</span>
+        <span class="tag diff-${p.difficulty}">${diffLabel}</span>
+        <span class="tag status-${p.status}">${statusLabel}</span>
+      </div>
+      ${p.category ? `<div class="p-meta">分类：${esc(p.category)}</div>` : ""}
+      ${p.url ? `<div class="p-meta"><a href="${esc(p.url)}" target="_blank" rel="noopener">题解链接</a></div>` : ""}
+      ${p.notes ? `<div class="p-notes">${esc(p.notes)}</div>` : ""}
+      <div class="p-actions">
+        <button class="btn-ghost" data-edit>编辑</button>
+        <button class="btn-danger" data-del>删除</button>
+      </div>`;
+    card.querySelector("[data-edit]").onclick = () => {
+      editingId = p.id;
+      $("p-title").value = p.title;
+      $("p-difficulty").value = p.difficulty;
+      $("p-category").value = p.category;
+      $("p-url").value = p.url;
+      $("p-status").value = p.status;
+      $("p-notes").value = p.notes;
+      $("form-title").textContent = "编辑题目";
+      $("p-submit").textContent = "更新题目";
+      $("cancel-edit").classList.remove("hidden");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+    card.querySelector("[data-del]").onclick = async () => {
+      if (!confirm("确定删除这道题？")) return;
+      const res = await api("/api/problems/" + p.id, { method: "DELETE" });
+      if (res.ok) await loadProblems();
+    };
+    return card;
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+    );
+  }
+
+  // ---- 启动：带 Cookie 探测是否已登录 ----
+  (async () => {
+    setTab();
+    try {
+      const res = await api("/api/auth/me");
+      if (res.ok) {
+        await afterAuth();
+        return;
+      }
+    } catch (e) {}
+    showAuth();
+  })();
+</script>
+</body>
+</html>
