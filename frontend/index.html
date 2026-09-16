@@ -151,6 +151,9 @@
   .wq-meta { font-size: 13px; color: var(--muted); margin-top: 6px; }
   .badge-mastered { background: #dcfce7; color: var(--green); }
   .badge-pending { background: #fef9c3; color: #a16207; }
+  /* 错题本筛选/排序工具栏 */
+  .wq-toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+  .wq-toolbar select { width: auto; margin: 0; padding: 7px 10px; font-size: 13px; }
   @media (max-width: 560px) { .wq-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -236,6 +239,18 @@
         </section>
         <section class="card">
           <h2>我的错题本 <span id="wq-count" class="muted"></span></h2>
+          <div class="wq-toolbar">
+            <select id="wq-filter">
+              <option value="all">全部</option>
+              <option value="pending">复习中</option>
+              <option value="mastered">已掌握</option>
+            </select>
+            <select id="wq-sort">
+              <option value="recent">最近添加</option>
+              <option value="review_desc">复习次数 ↓</option>
+              <option value="review_asc">复习次数 ↑</option>
+            </select>
+          </div>
           <div id="wq-list" class="list"></div>
         </section>
       </section>
@@ -416,6 +431,12 @@
 
   // ---- 错题本 CRUD ----
   let wqEditingId = null;
+  let wqAll = [];          // 全量缓存，筛选/排序在本地做（单人数据量小，无需后端改动）
+  let wqFilter = "all";    // all | pending | mastered
+  let wqSort = "recent";   // recent | review_desc | review_asc
+
+  $("wq-filter").onchange = (e) => { wqFilter = e.target.value; renderWqList(); };
+  $("wq-sort").onchange = (e) => { wqSort = e.target.value; renderWqList(); };
 
   $("wq-form").onsubmit = async (e) => {
     e.preventDefault();
@@ -449,15 +470,28 @@
 
   async function loadWrongQuestions() {
     const res = await api("/api/wrong-questions");
-    const list = await res.json();
-    $("wq-count").textContent = "(" + list.length + ")";
+    wqAll = await res.json();
+    renderWqList();
+  }
+
+  function renderWqList() {
     const box = $("wq-list");
     box.innerHTML = "";
-    if (!list.length) {
-      box.innerHTML = '<p class="empty">错题本还空着，把第一道错题记下来吧。</p>';
+    let items = wqAll;
+    if (wqFilter === "mastered") items = items.filter((w) => w.mastered);
+    else if (wqFilter === "pending") items = items.filter((w) => !w.mastered);
+    if (wqSort === "review_desc") items = items.slice().sort((a, b) => b.review_count - a.review_count);
+    else if (wqSort === "review_asc") items = items.slice().sort((a, b) => a.review_count - b.review_count);
+    // recent：保持后端 created_at desc 顺序，无需再排
+    $("wq-count").textContent =
+      wqFilter === "all" ? "(" + items.length + ")" : "(" + items.length + " / " + wqAll.length + ")";
+    if (!items.length) {
+      box.innerHTML = '<p class="empty">' +
+        (wqAll.length ? "没有符合筛选条件的错题。" : "错题本还空着，把第一道错题记下来吧。") +
+        "</p>";
       return;
     }
-    list.forEach((w) => box.appendChild(renderWqCard(w)));
+    items.forEach((w) => box.appendChild(renderWqCard(w)));
   }
 
   function renderWqCard(w) {
