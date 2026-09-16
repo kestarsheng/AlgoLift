@@ -154,6 +154,15 @@
   /* 错题本筛选/排序工具栏 */
   .wq-toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
   .wq-toolbar select { width: auto; margin: 0; padding: 7px 10px; font-size: 13px; }
+  /* 错题卡片快捷操作：标为已掌握 / 复习+1 */
+  .wq-quick { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .wq-quick button {
+    flex: 1 1 0; min-width: 120px; padding: 7px 10px; font-size: 13px; font-weight: 600;
+    border-radius: 8px; border: 1px solid var(--line); background: #fff; color: var(--ink);
+    cursor: pointer; transition: all .15s;
+  }
+  .wq-quick button:hover { border-color: var(--orange); color: var(--orange); }
+  .wq-quick button.mastered-on { background: #dcfce7; border-color: var(--green); color: var(--green); }
   @media (max-width: 560px) { .wq-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -506,6 +515,10 @@
       ${w.wrong_reason ? `<div class="wq-box">错因：${esc(w.wrong_reason)}</div>` : ""}
       ${w.correct_solution ? `<div class="wq-box solution">正解：${esc(w.correct_solution)}</div>` : ""}
       <div class="wq-meta">已复习 ${w.review_count} 次</div>
+      <div class="wq-quick">
+        <button class="${w.mastered ? "mastered-on" : ""}" data-master>${w.mastered ? "已掌握 · 点击取消" : "标为已掌握"}</button>
+        <button data-review>复习 +1</button>
+      </div>
       <div class="p-actions">
         <button class="btn-ghost" data-edit>编辑</button>
         <button class="btn-danger" data-del>删除</button>
@@ -528,7 +541,25 @@
       const res = await api("/api/wrong-questions/" + w.id, { method: "DELETE" });
       if (res.ok) await loadWrongQuestions();
     };
+    card.querySelector("[data-master]").onclick = () => patchWq(w.id, { mastered: !w.mastered });
+    card.querySelector("[data-review]").onclick = () => patchWq(w.id, { review_count: w.review_count + 1 });
     return card;
+  }
+
+  // 卡片上的快捷操作：PATCH 单字段，成功后合并进本地缓存并重渲染（保留当前筛选/排序）
+  async function patchWq(id, patch) {
+    const res = await api("/api/wrong-questions/" + id, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    });
+    if (res.ok) {
+      const i = wqAll.findIndex((x) => x.id === id);
+      if (i >= 0) Object.assign(wqAll[i], patch);
+      renderWqList();
+    } else {
+      alert("更新失败，请重试");
+    }
+    return res.ok;
   }
 
   // ---- 启动：带 Cookie 探测是否已登录 ----
