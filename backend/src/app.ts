@@ -9,6 +9,7 @@ import { notFoundMiddleware } from './middleware/not-found.middleware';
 import { healthRouter } from './modules/health/health.route';
 import { authRouter } from './modules/auth/auth.route';
 import { categoryRouter } from './modules/category/category.route';
+import { problemNotesRouter } from './modules/problem-notes/problem-notes.route';
 
 export const app = express();
 
@@ -18,6 +19,7 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api', healthRouter);
 app.use('/api', authRouter);
 app.use('/api', categoryRouter);
+app.use('/api', problemNotesRouter);
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
 
