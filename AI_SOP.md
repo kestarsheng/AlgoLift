@@ -92,6 +92,56 @@
 
 Git tag 格式：`v1.0.0`、`v1.2.3`，必须带 `v` 前缀。
 
+### 1.8 分支自动命名规则
+
+功能开发前，AI 必须根据任务类型自动生成分支名，不需要询问用户。命名规则如下：
+
+| 任务类型 | 分支前缀 | 示例 |
+|---|---|---|
+| 新功能 | `feat/` | `feat/user-auth`、`feat/category-crud` |
+| 缺陷修复 | `fix/` | `fix/login-validation`、`fix/schema-format` |
+| 重构 | `refactor/` | `refactor/auth-service` |
+| 文档 | `docs/` | `docs/api-swagger` |
+| 配置/构建 | `chore/` | `chore/ci-setup`、`chore/deps-upgrade` |
+
+命名要求：
+- 使用英文小写
+- 单词之间用短横线 `-` 连接
+- 不超过 4 个单词
+- 语义清晰，能看出这个分支在做什么
+
+AI 在开始任务前，必须先执行：
+1. `git checkout develop`
+2. `git pull origin develop`
+3. `git checkout -b <自动生成的分支名>`
+4. `git push -u origin <自动生成的分支名>`
+
+任务完成后，AI 必须执行：
+1. `git checkout develop`
+2. `git merge <分支名>`
+3. `git push origin develop`
+4. 提醒用户是否删除该分支（默认保留，除非用户确认删除）
+
+### 1.9 AI 全自动工作流
+
+本项目采用“AI 全自动模式”。每次任务，AI 必须自己完成以下全部操作，不需要用户手动执行任何 Git 命令：
+
+1. 根据任务类型，按 1.8 节自动生成分支名。
+2. 从 `develop` 切出新分支。
+3. 写代码。
+4. 写测试（如果适用）。
+5. 跑构建和测试，确认通过。
+6. `git add -A`
+7. `git commit -m "<type>: <描述>"`
+8. `git push -u origin <分支名>`
+9. `git checkout develop`
+10. `git merge <分支名>`
+11. `git push origin develop`
+12. 删除本地和远程功能分支。
+13. 向用户报告：做了什么、测试结果、commit hash。
+
+**唯一例外**：`main` 分支的合并由用户手动执行。AI 只负责合并到 `develop`。
+
 ---
 
 ## 二、.gitignore 规范
