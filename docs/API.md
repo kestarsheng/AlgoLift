@@ -94,6 +94,18 @@
 |---|---|---|---|---|---|
 | PUT | `/api/problems/{problemId}/notes` | Bearer JWT | Path：`problemId`；JSON：`noteIds` 字符串数组，可为空且不可重复 | `200`：`{ "data": { "problemId": "uuid", "notes": [Note] } }` | `INVALID_NOTE_IDS` (400)、`NOTE_ACCESS_DENIED` (403)、`PROBLEM_NOT_FOUND` (404) |
 
+## Note 题解笔记
+
+| 方法 | 路径 | 请求 | 成功响应 | 错误 |
+|---|---|---|---|---|
+| GET | `/api/notes` | Query：`page`、`pageSize`、`keyword` | `200`：分页笔记列表 | `401` |
+| GET | `/api/notes/{noteId}` | Path：`noteId` | `200`：`{ data: Note }` | `404 NOTE_NOT_FOUND` |
+| POST | `/api/notes` | JSON：`title`、`content`、`solutionLinks` | `201`：`{ data: Note }` | `400 INVALID_NOTE_INPUT` |
+| PATCH | `/api/notes/{noteId}` | JSON：至少一个可编辑字段 | `200`：`{ data: Note }` | `400 INVALID_NOTE_INPUT`、`404 NOTE_NOT_FOUND` |
+| DELETE | `/api/notes/{noteId}` | Path：`noteId` | `204` | `404 NOTE_NOT_FOUND` |
+
+`solutionLinks` 为 `{ name, url }[]`，URL 仅支持 HTTP/HTTPS；本模块不提供题目或错题关联接口。
+
 ```json
 { "noteIds": ["note-uuid-1", "note-uuid-2"] }
 ```
