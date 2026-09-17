@@ -7,6 +7,7 @@ import { swaggerSpec } from './config/swagger';
 import { errorMiddleware } from './middleware/error.middleware';
 import { notFoundMiddleware } from './middleware/not-found.middleware';
 import { healthRouter } from './modules/health/health.route';
+import { authRouter } from './modules/auth/auth.route';
 
 export const app = express();
 
@@ -14,6 +15,7 @@ app.use(cors({ origin: config.frontendUrl, credentials: true }));
 app.use(express.json());
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api', healthRouter);
+app.use('/api', authRouter);
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
 
