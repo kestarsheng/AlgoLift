@@ -1,10 +1,33 @@
 // AlgoLift 数据库模型定义。
-generator client { provider = "prisma-client-js" }
-datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+generator client {
+  provider = "prisma-client-js"
+}
 
-enum Difficulty { EASY MEDIUM HARD @@map("difficulty") }
-enum TodoPriority { P0 P1 P2 @@map("todo_priority") }
-enum TodoStatus { TODO IN_PROGRESS COMPLETED @@map("todo_status") }
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+  @@map("difficulty")
+}
+
+enum TodoPriority {
+  P0
+  P1
+  P2
+  @@map("todo_priority")
+}
+
+enum TodoStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETED
+  @@map("todo_status")
+}
 
 model User {
   id String @id @default(uuid()) @db.Uuid
