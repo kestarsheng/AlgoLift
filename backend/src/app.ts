@@ -8,6 +8,7 @@ import { errorMiddleware } from './middleware/error.middleware';
 import { notFoundMiddleware } from './middleware/not-found.middleware';
 import { healthRouter } from './modules/health/health.route';
 import { authRouter } from './modules/auth/auth.route';
+import { categoryRouter } from './modules/category/category.route';
 
 export const app = express();
 
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api', healthRouter);
 app.use('/api', authRouter);
+app.use('/api', categoryRouter);
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
 
