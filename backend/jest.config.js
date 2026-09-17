@@ -1,0 +1,7 @@
+/** Configure Jest to execute the TypeScript integration tests. */
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  testMatch: ['<rootDir>/tests/**/*.test.ts'],
+  clearMocks: true
+};
