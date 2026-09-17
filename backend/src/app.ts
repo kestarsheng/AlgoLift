@@ -10,6 +10,7 @@ import { healthRouter } from './modules/health/health.route';
 import { authRouter } from './modules/auth/auth.route';
 import { categoryRouter } from './modules/category/category.route';
 import { problemNotesRouter } from './modules/problem-notes/problem-notes.route';
+import { problemRouter } from './modules/problem/problem.route';
 
 export const app = express();
 
@@ -20,6 +21,7 @@ app.use('/api', healthRouter);
 app.use('/api', authRouter);
 app.use('/api', categoryRouter);
 app.use('/api', problemNotesRouter);
+app.use('/api', problemRouter);
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
 
