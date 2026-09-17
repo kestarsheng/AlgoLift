@@ -16,10 +16,11 @@ export class AuthError extends Error {
 }
 
 const normalizeEmail = (email: string): string => email.trim().toLowerCase();
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const register = async (input: RegisterDto): Promise<AuthResponse> => {
   const email = normalizeEmail(input.email);
-  if (!email || input.password.length < 8 || input.password.length > 72) {
+  if (!emailPattern.test(email) || input.password.length < 8 || input.password.length > 72) {
     throw new AuthError('VALIDATION_ERROR', 'Email or password format is invalid', 400);
   }
 
