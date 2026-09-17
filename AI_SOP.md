@@ -148,6 +148,18 @@ AI 在开始任务前，必须先执行：
 - 推送功能分支到远程后，**停止**，并告知用户："功能分支已推送，请手动在 GitHub 上开 PR。"
 - 由用户手动完成 PR 创建、CI 等待、合并。
 
+### 1.10 GitHub 操作规范（AI 全自动）
+
+AI 使用 `gh` CLI 完成以下操作，不需要用户手动：
+
+1. 开 PR：`gh pr create --base develop --head <分支名> --title "<标题>" --body "<描述>"`
+2. 查看 CI 状态：`gh pr checks <PR编号>`
+3. 等待 CI 通过：`gh pr checks <PR编号> --watch`
+4. 合并 PR：`gh pr merge <PR编号> --merge --delete-branch`
+5. 如果 CI 失败：`gh run view <run-id> --log-failed`，根据报错修复后重新 push。
+
+如果 `gh` 命令失败（未登录、权限不足等），必须停下来告知用户，不要强行 push。
+
 ---
 
 ## 二、.gitignore 规范
