@@ -124,7 +124,7 @@ AI 在开始任务前，必须先执行：
 
 ### 1.9 AI 全自动工作流
 
-本项目采用"AI 全自动模式"。AI 不允许直接 commit 到 `develop` 或 `main`。所有功能开发必须在 `feat/xxx` 分支上完成，然后通过 PR 合并。每次任务，AI 必须自己完成以下全部操作，不需要用户手动执行任何 Git 命令：
+AI 必须自己完成以下全部操作，不需要用户手动执行任何 Git 或 GitHub 命令：
 
 1. 根据任务类型，按 1.8 节自动生成分支名。
 2. 从 `develop` 切出新分支。
@@ -134,19 +134,19 @@ AI 在开始任务前，必须先执行：
 6. `git add -A`
 7. `git commit -m "<type>: <描述>"`
 8. `git push -u origin <分支名>`
-9. 在 GitHub 上开 PR：从 `<分支名>` 合并到 `develop`。
-10. 等待 CI 跑绿（`CI / backend` 状态检查通过）。
-11. 在 GitHub 上点 "Merge pull request" 完成合并。
-12. 删除远程功能分支（PR 页面提供 "Delete branch" 按钮）。
-13. 向用户报告：做了什么、测试结果、commit hash、PR 链接。
+9. `gh pr create --base develop --head <分支名> --title "<标题>" --body "<描述>"`
+10. `gh pr checks --watch`，等 CI 跑绿。
+11. `gh pr merge <PR编号> --merge --delete-branch`
+12. `git checkout develop`
+13. `git pull origin develop`
+14. `git branch -d <分支名>`
+15. 向用户报告：做了什么、测试结果、commit hash、PR 链接、当前 `develop` 状态。
 
 **唯一例外**：`main` 分支的合并由用户手动执行。AI 只负责合并到 `develop`。
 
-**注意**：由于 `develop` 已配置 Rulesets（禁止直接 push），第 9-11 步必须通过 GitHub PR 完成，不能使用 `git merge` + `git push` 的本地合并方式。
+**如果 CI 失败**：用 `gh run view <run-id> --log-failed` 看报错，修复后重新 push，再等 CI。
 
-**如果 AI 无法在 GitHub 上开 PR**（例如执行环境不支持 GitHub API 操作），则：
-- 推送功能分支到远程后，**停止**，并告知用户："功能分支已推送，请手动在 GitHub 上开 PR。"
-- 由用户手动完成 PR 创建、CI 等待、合并。
+**如果 `gh pr merge` 被 Rulesets 阻挡**：停下来告知用户，不要用 `--admin`。
 
 ### 1.10 GitHub 操作规范（AI 全自动）
 
