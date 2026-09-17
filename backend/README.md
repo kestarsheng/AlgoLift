@@ -61,3 +61,13 @@ npm run dev
 npm run lint
 npm start
 ```
+
+## 7. GitHub Actions CI
+
+CI 会在 `main`、`develop` 的 push，以及针对这两个分支的 Pull Request 上运行。
+请在 GitHub 仓库的 `Settings` → `Secrets and variables` → `Actions` 中添加以下仓库级 Secrets：
+
+- `DATABASE_URL`：测试数据库的 PostgreSQL 连接字符串。
+- `JWT_SECRET`：用于测试环境签发 JWT 的随机密钥。
+
+CI 会使用 Node.js 20，依次执行 `npm install`、`npm run build` 和 `npm test`。
