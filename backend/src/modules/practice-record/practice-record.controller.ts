@@ -1,0 +1,8 @@
+// 处理练习记录 HTTP 请求并转交统一错误中间件。
+import { NextFunction, Request, Response } from 'express';
+import { isCreatePracticeRecordInput, parsePracticeRecordQuery } from './practice-record.dto';
+import * as service from './practice-record.service';
+const param = (req: Request, name: string): string => { const value = req.params[name]; if (!value || Array.isArray(value)) throw new service.PracticeRecordError('VALIDATION_ERROR', 'Invalid route parameter', 400); return value; };
+export const getPracticeRecords = async (req: Request, res: Response, next: NextFunction): Promise<void> => { try { res.json(await service.listPracticeRecords(req.auth!.sub, param(req, 'problemId'), parsePracticeRecordQuery(req.query))); } catch (error: unknown) { next(error); } };
+export const postPracticeRecord = async (req: Request, res: Response, next: NextFunction): Promise<void> => { try { if (!isCreatePracticeRecordInput(req.body)) throw new service.PracticeRecordError('INVALID_PRACTICE_RECORD', 'Invalid practice record payload', 400); res.status(201).json(await service.createPracticeRecord(req.auth!.sub, param(req, 'problemId'), req.body)); } catch (error: unknown) { next(error); } };
+export const removePracticeRecord = async (req: Request, res: Response, next: NextFunction): Promise<void> => { try { await service.deletePracticeRecord(req.auth!.sub, param(req, 'problemId'), param(req, 'recordId')); res.status(204).send(); } catch (error: unknown) { next(error); } };

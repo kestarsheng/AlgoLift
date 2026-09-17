@@ -11,6 +11,7 @@ import { authRouter } from './modules/auth/auth.route';
 import { categoryRouter } from './modules/category/category.route';
 import { problemNotesRouter } from './modules/problem-notes/problem-notes.route';
 import { problemRouter } from './modules/problem/problem.route';
+import { practiceRecordRouter } from './modules/practice-record/practice-record.route';
 
 export const app = express();
 
@@ -22,6 +23,7 @@ app.use('/api', authRouter);
 app.use('/api', categoryRouter);
 app.use('/api', problemNotesRouter);
 app.use('/api', problemRouter);
+app.use('/api', practiceRecordRouter);
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
 
