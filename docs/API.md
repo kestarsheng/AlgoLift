@@ -85,6 +85,8 @@
 
 前端刷题流程使用分类看板 `/categories`、分类题目列表 `/categories/{categoryId}/problems` 和题目详情 `/problems/{problemId}`；列表支持 `keyword`、`difficulty`、`page`、`pageSize`，详情通过练习记录接口展示日期、首遍正确状态和备注。
 
+前端题目详情页由独立 `problemDetail` 与 `practiceRecord` Pinia Store 驱动：详情加载后展示分类、内部笔记和关联题解笔记；练习记录支持分页、创建和删除，创建成功后回到第 1 页并刷新列表。
+
 | 方法 | 路径 | 鉴权 | 请求参数/请求体 | 响应示例 | 错误码 |
 |---|---|---|---|---|---|
 | GET | `/api/problems/{problemId}/practice-records` | Bearer JWT | Path：`problemId`；Query：`page`、`pageSize` 可选 | `200`：记录分页 | `INVALID_QUERY` (500)、`PROBLEM_NOT_FOUND` (404) |
