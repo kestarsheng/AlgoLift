@@ -139,7 +139,7 @@ Todo 响应包含 `isOverdue`：截止日期早于当天且状态不是 `COMPLET
 
 ## Wrong 错题
 
-错题分类为自由文本，与 Category 模块无关；`solutionLinks` 为 `{ name, url }[]`，URL 仅支持 HTTP/HTTPS。本模块不提供 WrongNote 关联接口。
+错题分类为自由文本，与 Category 模块无关；`solutionLinks` 为 `{ name, url }[]`，URL 仅支持 HTTP/HTTPS。
 
 | 方法 | 路径 | 请求参数/请求体 | 成功响应 | 错误 |
 |---|---|---|---|---|
@@ -150,3 +150,11 @@ Todo 响应包含 `isOverdue`：截止日期早于当天且状态不是 `COMPLET
 | DELETE | `/api/wrongs/{wrongId}` | Path：`wrongId` | `204`：无响应体 | `401 UNAUTHORIZED`、`404 WRONG_NOT_FOUND` |
 
 `problemId` 可在创建或编辑时传入；传入的题目必须属于当前用户，传 `null` 可清除关联。
+
+## WrongNote 错题—题解笔记关联
+
+| GET | `/api/wrongs/{wrongId}/notes` | Bearer JWT | Path：`wrongId` | `200`：`{ data: { wrongId, notes: Note[] } }` | `404 WRONG_NOT_FOUND` |
+| PUT | `/api/wrongs/{wrongId}/notes` | Bearer JWT | JSON：`noteIds` 字符串数组，可为空且不可重复 | `200`：关联替换后的笔记 | `400 INVALID_NOTE_IDS`、`403 NOTE_ACCESS_DENIED`、`404 WRONG_NOT_FOUND` |
+| DELETE | `/api/wrongs/{wrongId}/notes/{noteId}` | Bearer JWT | Path：`wrongId`、`noteId` | `204` | `404 WRONG_NOT_FOUND`、`404 WRONG_NOTE_NOT_FOUND` |
+
+以上接口仅允许关联当前用户拥有的 Wrong 和 Note；整体替换为事务操作，校验失败时保留原有关联。
