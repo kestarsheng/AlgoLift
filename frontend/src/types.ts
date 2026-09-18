@@ -6,3 +6,6 @@ export interface Wrong { id: string; title: string; category?: string | null; di
 export interface WrongListItem extends Wrong { noteCount: number }
 export interface Pagination { page: number; pageSize: number; total: number; totalPages: number }
 export interface WrongNotesResponse { data: { wrongId: string; notes: Note[] } }
+export interface Category { id: string; name: string; problemCount: number }
+export interface ProblemListItem { id: string; title: string; difficulty: Difficulty; practiceCount: number; noteCount: number; lastPracticedAt: string | null }
+export interface PracticeRecord { id: string; practicedAt: string; solvedFirstTry: boolean; remark: string | null }
