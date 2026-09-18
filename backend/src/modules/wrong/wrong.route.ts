@@ -5,7 +5,7 @@ import * as controller from './wrong.controller';
 export const wrongRouter = Router(); wrongRouter.use(requireAuth);
 /** @swagger
  * /wrongs:
- *   get: { summary: List wrongs, security: [{ bearerAuth: [] }], responses: { 200: { description: OK } } }
+ *   get: { summary: List wrongs; each item includes noteCount, security: [{ bearerAuth: [] }], responses: { 200: { description: OK } } }
  *   post: { summary: Create wrong, security: [{ bearerAuth: [] }], responses: { 201: { description: Created }, 400: { description: Invalid payload } } }
  * /wrongs/{wrongId}:
  *   get: { summary: Get wrong, security: [{ bearerAuth: [] }], responses: { 200: { description: OK }, 404: { description: Not found } } }

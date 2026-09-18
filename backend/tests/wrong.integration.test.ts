@@ -13,7 +13,10 @@ describe('wrong CRUD', () => {
     const created = await request(app).post('/api/wrongs').set('Authorization', `Bearer ${account.token}`).send({ problemId: problem.id, title: ' 三数之和去重 ', category: '双指针', difficulty: 'MEDIUM', review: '<p onclick="bad()">复盘</p>', solutionLinks: [{ name: '题解', url: 'https://example.com' }] });
     expect(created.status).toBe(201); expect(created.body.data.title).toBe('三数之和去重'); expect(created.body.data.review).toBe('<p>复盘</p>');
     const id = created.body.data.id;
-    expect((await request(app).get('/api/wrongs?category=双指针').set('Authorization', `Bearer ${account.token}`)).body.data).toHaveLength(1);
+    const note = await prisma.note.create({ data: { userId: account.id, title: '双指针题解' } });
+    await prisma.wrongNote.create({ data: { wrongId: id, noteId: note.id } });
+    const listed = await request(app).get('/api/wrongs?category=双指针').set('Authorization', `Bearer ${account.token}`);
+    expect(listed.body.data).toHaveLength(1); expect(listed.body.data[0].noteCount).toBe(1);
     expect((await request(app).get(`/api/wrongs/${id}`).set('Authorization', `Bearer ${account.token}`)).body.data.problemId).toBe(problem.id);
     expect((await request(app).patch(`/api/wrongs/${id}`).set('Authorization', `Bearer ${account.token}`).send({ difficulty: 'HARD', review: null })).body.data.difficulty).toBe('HARD');
     expect((await request(app).delete(`/api/wrongs/${id}`).set('Authorization', `Bearer ${account.token}`)).status).toBe(204);
