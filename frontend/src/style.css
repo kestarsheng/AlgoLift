@@ -1,2 +1,5 @@
-/* Tailwind-compatible utility baseline; component styling remains utility-first. */
+/* Theme variables and Tailwind-compatible utility baseline. */
 @import 'tailwindcss';
+:root { --color-bg: #F5F8FA; --color-text: #26313A; --color-accent: #3E6B8C; --color-accent-light: #DDE8F0; --color-border: #C8D6E0; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 375px; background: var(--color-bg); color: var(--color-text); font-family: system-ui, sans-serif; }

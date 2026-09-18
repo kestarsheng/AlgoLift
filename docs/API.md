@@ -155,6 +155,8 @@ Todo 响应包含 `isOverdue`：截止日期早于当天且状态不是 `COMPLET
 
 `problemId` 可在创建或编辑时传入；传入的题目必须属于当前用户，传 `null` 可清除关联。
 
+前端列表页使用 `noteCount` 展示错题关联笔记数量，使用 `problemCount` 和 `wrongCount` 展示题解笔记关联题目与错题数量；这些字段由列表接口通过 Prisma `_count` 聚合返回。
+
 ## WrongNote 错题—题解笔记关联
 
 前端 `frontend/src/stores/wrongNote.ts` 封装上述三个接口；错题详情页支持查看、整体替换、清空和解除单条关联。题解笔记详情页通过错题列表与关联查询展示反向关联错题。
