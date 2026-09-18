@@ -12,10 +12,10 @@
 - [PracticeRecord](#practicerecord)
 - [ProblemNote](#problemnote)
 - [Note 题解笔记](#note-题解笔记)
-- [Todo](#todo)
+- [Todo 待办](#todo)
 - [Progress 学习进度](#progress-学习进度)
 - [Wrong 错题](#wrong-错题)
-- [WrongNote 错题—题解笔记关联](#wrongnote-错题—题解笔记关联)
+- [WrongNote 错题—题解笔记关联](#wrong-note)
 
 ## 通用约定
 
@@ -119,7 +119,7 @@
 { "noteIds": ["note-uuid-1", "note-uuid-2"] }
 ```
 
-## Todo 待办
+## Todo 待办 {#todo}
 
 优先级为 `P0`、`P1`、`P2`；状态为 `TODO`（待办）、`IN_PROGRESS`（进行中）、`COMPLETED`（已完成）；日期使用 `YYYY-MM-DD`。
 
@@ -161,7 +161,7 @@ Todo 响应包含 `isOverdue`：截止日期早于当天且状态不是 `COMPLET
 
 前端列表页使用 `noteCount` 展示错题关联笔记数量，使用 `problemCount` 和 `wrongCount` 展示题解笔记关联题目与错题数量；这些字段由列表接口通过 Prisma `_count` 聚合返回。
 
-## WrongNote 错题—题解笔记关联
+## WrongNote 错题—题解笔记关联 {#wrong-note}
 
 前端 `frontend/src/stores/wrongNote.ts` 封装上述三个接口；错题详情页支持查看、整体替换、清空和解除单条关联。题解笔记详情页通过错题列表与关联查询展示反向关联错题。
 
