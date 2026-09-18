@@ -103,7 +103,7 @@
 
 | 方法 | 路径 | 请求 | 成功响应 | 错误 |
 |---|---|---|---|---|
-| GET | `/api/notes` | Query：`page`、`pageSize`、`keyword` | `200`：分页笔记列表 | `401` |
+| GET | `/api/notes` | Query：`page`、`pageSize`、`keyword` | `200`：分页笔记列表；每项额外包含 `problemCount`、`wrongCount` | `401` |
 | GET | `/api/notes/{noteId}` | Path：`noteId` | `200`：`{ data: Note }` | `404 NOTE_NOT_FOUND` |
 | POST | `/api/notes` | JSON：`title`、`content`、`solutionLinks` | `201`：`{ data: Note }` | `400 INVALID_NOTE_INPUT` |
 | PATCH | `/api/notes/{noteId}` | JSON：至少一个可编辑字段 | `200`：`{ data: Note }` | `400 INVALID_NOTE_INPUT`、`404 NOTE_NOT_FOUND` |
@@ -147,7 +147,7 @@ Todo 响应包含 `isOverdue`：截止日期早于当天且状态不是 `COMPLET
 
 | 方法 | 路径 | 请求参数/请求体 | 成功响应 | 错误 |
 |---|---|---|---|---|
-| GET | `/api/wrongs` | Query：`page`、`pageSize`、`keyword`、`category`、`difficulty` 可选 | `200`：`{ data: Wrong[], pagination }` | `400 INVALID_QUERY`、`401 UNAUTHORIZED` |
+| GET | `/api/wrongs` | Query：`page`、`pageSize`、`keyword`、`category`、`difficulty` 可选 | `200`：`{ data: Wrong[], pagination }`；每项额外包含 `noteCount` | `400 INVALID_QUERY`、`401 UNAUTHORIZED` |
 | POST | `/api/wrongs` | JSON：`title`、`difficulty`、`solutionLinks` 必填；`problemId`、`category`、`review` 可选 | `201`：`{ data: Wrong }` | `400 INVALID_WRONG_INPUT`、`404 PROBLEM_NOT_FOUND` |
 | GET | `/api/wrongs/{wrongId}` | Path：`wrongId` | `200`：`{ data: Wrong }` | `401 UNAUTHORIZED`、`404 WRONG_NOT_FOUND` |
 | PATCH | `/api/wrongs/{wrongId}` | JSON：至少一个可编辑字段：`problemId`、`title`、`category`、`difficulty`、`review`、`solutionLinks` | `200`：`{ data: Wrong }` | `400 INVALID_WRONG_INPUT`、`404 WRONG_NOT_FOUND`、`404 PROBLEM_NOT_FOUND` |

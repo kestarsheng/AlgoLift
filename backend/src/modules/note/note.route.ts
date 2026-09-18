@@ -5,7 +5,7 @@ import * as controller from './note.controller';
 export const noteRouter = Router(); noteRouter.use(requireAuth);
 /** @swagger
  * /notes:
- *   get: { summary: List notes, security: [{ bearerAuth: [] }], responses: { 200: { description: OK } } }
+ *   get: { summary: List notes; each item includes problemCount and wrongCount, security: [{ bearerAuth: [] }], responses: { 200: { description: OK } } }
  *   post: { summary: Create note, security: [{ bearerAuth: [] }], responses: { 201: { description: Created }, 400: { description: Invalid payload } } }
  * /notes/{noteId}:
  *   get: { summary: Get note, security: [{ bearerAuth: [] }], responses: { 200: { description: OK }, 404: { description: Not found } } }
