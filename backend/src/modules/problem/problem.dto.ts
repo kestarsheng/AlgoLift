@@ -1,5 +1,6 @@
 // 定义题目 CRUD 接口的请求类型、查询类型与输入校验。
 import { Difficulty } from '@prisma/client';
+import sanitizeHtml from 'sanitize-html';
 
 export interface CreateProblemInput { title: string; difficulty: Difficulty; internalNote?: string | null; categoryIds?: string[] }
 export interface UpdateProblemInput { title?: string; difficulty?: Difficulty; internalNote?: string | null }
@@ -10,7 +11,7 @@ const validText = (value: unknown, maxLength: number): value is string => typeof
 const validDifficulty = (value: unknown): value is Difficulty => typeof value === 'string' && difficulties.has(value as Difficulty);
 const validIds = (value: unknown): value is string[] => Array.isArray(value) && value.every((id) => typeof id === 'string' && id.length > 0) && new Set(value).size === value.length;
 
-export const cleanHtml = (value: string): string => value.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '').replace(/\s+on[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '');
+export const cleanHtml = (value: string): string => sanitizeHtml(value);
 export const isCreateProblemInput = (value: unknown): value is CreateProblemInput => {
   if (!value || typeof value !== 'object') return false;
   const input = value as Partial<CreateProblemInput>;
