@@ -124,3 +124,15 @@
 | DELETE | `/api/todos/{todoId}` | Path：`todoId` | `204`：无响应体 | `404 TODO_NOT_FOUND` |
 
 Todo 响应包含 `isOverdue`：截止日期早于当天且状态不是 `COMPLETED` 时为 `true`；列表按未完成、日期、优先级排序。
+
+## Progress 学习进度
+
+进度值为 `0`–`100` 的整数；`progressDate` 使用 `YYYY-MM-DD`，列表默认按日期倒序。
+
+| 方法 | 路径 | 请求参数/请求体 | 成功响应 | 错误 |
+|---|---|---|---|---|
+| GET | `/api/progresses` | Query：`keyword`、`page`、`pageSize` 可选 | `200`：`{ data: Progress[], pagination }` | `400 INVALID_QUERY`、`401 UNAUTHORIZED` |
+| POST | `/api/progresses` | JSON：`title`、`progress`、`progressDate` 必填；`description` 可选 | `201`：`{ data: Progress }` | `400 INVALID_PROGRESS_INPUT`、`401 UNAUTHORIZED` |
+| GET | `/api/progresses/{progressId}` | Path：`progressId` | `200`：`{ data: Progress }` | `401 UNAUTHORIZED`、`404 PROGRESS_NOT_FOUND` |
+| PATCH | `/api/progresses/{progressId}` | JSON：至少一个可编辑字段：`title`、`progress`、`progressDate`、`description` | `200`：`{ data: Progress }` | `400 INVALID_PROGRESS_INPUT`、`401 UNAUTHORIZED`、`404 PROGRESS_NOT_FOUND` |
+| DELETE | `/api/progresses/{progressId}` | Path：`progressId` | `204`：无响应体 | `401 UNAUTHORIZED`、`404 PROGRESS_NOT_FOUND` |
