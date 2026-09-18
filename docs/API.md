@@ -11,6 +11,7 @@
 - [Problem](#problem)
 - [PracticeRecord](#practicerecord)
 - [ProblemNote](#problemnote)
+- [Todo](#todo)
 
 ## 通用约定
 
@@ -109,3 +110,17 @@
 ```json
 { "noteIds": ["note-uuid-1", "note-uuid-2"] }
 ```
+
+## Todo 待办
+
+优先级为 `P0`、`P1`、`P2`；状态为 `TODO`（待办）、`IN_PROGRESS`（进行中）、`COMPLETED`（已完成）；日期使用 `YYYY-MM-DD`。
+
+| 方法 | 路径 | 请求参数/请求体 | 成功响应 | 错误 |
+|---|---|---|---|---|
+| GET | `/api/todos` | Query：`status`、`priority`、`overdue`、`keyword`、`page`、`pageSize` 可选 | `200`：`{ data: Todo[], pagination }` | `400 INVALID_QUERY`、`401 UNAUTHORIZED` |
+| POST | `/api/todos` | JSON：`title`、`priority` 必填；`dueDate`、`status`、`remark` 可选 | `201`：`{ data: Todo }` | `400 INVALID_TODO_INPUT` |
+| GET | `/api/todos/{todoId}` | Path：`todoId` | `200`：`{ data: Todo }` | `404 TODO_NOT_FOUND` |
+| PATCH | `/api/todos/{todoId}` | JSON：至少一个可编辑字段：`title`、`dueDate`、`priority`、`status`、`remark` | `200`：`{ data: Todo }` | `400 INVALID_TODO_INPUT`、`404 TODO_NOT_FOUND` |
+| DELETE | `/api/todos/{todoId}` | Path：`todoId` | `204`：无响应体 | `404 TODO_NOT_FOUND` |
+
+Todo 响应包含 `isOverdue`：截止日期早于当天且状态不是 `COMPLETED` 时为 `true`；列表按未完成、日期、优先级排序。
