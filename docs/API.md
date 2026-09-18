@@ -83,6 +83,8 @@
 
 ## PracticeRecord
 
+前端刷题流程使用分类看板 `/categories`、分类题目列表 `/categories/{categoryId}/problems` 和题目详情 `/problems/{problemId}`；列表支持 `keyword`、`difficulty`、`page`、`pageSize`，详情通过练习记录接口展示日期、首遍正确状态和备注。
+
 | 方法 | 路径 | 鉴权 | 请求参数/请求体 | 响应示例 | 错误码 |
 |---|---|---|---|---|---|
 | GET | `/api/problems/{problemId}/practice-records` | Bearer JWT | Path：`problemId`；Query：`page`、`pageSize` 可选 | `200`：记录分页 | `INVALID_QUERY` (500)、`PROBLEM_NOT_FOUND` (404) |
