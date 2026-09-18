@@ -15,6 +15,7 @@ import { practiceRecordRouter } from './modules/practice-record/practice-record.
 import { noteRouter } from './modules/note/note.route';
 import { todoRouter } from './modules/todo/todo.route';
 import { progressRouter } from './modules/progress/progress.route';
+import { wrongRouter } from './modules/wrong/wrong.route';
 
 export const app = express();
 
@@ -30,6 +31,7 @@ app.use('/api', practiceRecordRouter);
 app.use('/api', noteRouter);
 app.use('/api', todoRouter);
 app.use('/api', progressRouter);
+app.use('/api', wrongRouter);
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
 

@@ -136,3 +136,17 @@ Todo 响应包含 `isOverdue`：截止日期早于当天且状态不是 `COMPLET
 | GET | `/api/progresses/{progressId}` | Path：`progressId` | `200`：`{ data: Progress }` | `401 UNAUTHORIZED`、`404 PROGRESS_NOT_FOUND` |
 | PATCH | `/api/progresses/{progressId}` | JSON：至少一个可编辑字段：`title`、`progress`、`progressDate`、`description` | `200`：`{ data: Progress }` | `400 INVALID_PROGRESS_INPUT`、`401 UNAUTHORIZED`、`404 PROGRESS_NOT_FOUND` |
 | DELETE | `/api/progresses/{progressId}` | Path：`progressId` | `204`：无响应体 | `401 UNAUTHORIZED`、`404 PROGRESS_NOT_FOUND` |
+
+## Wrong 错题
+
+错题分类为自由文本，与 Category 模块无关；`solutionLinks` 为 `{ name, url }[]`，URL 仅支持 HTTP/HTTPS。本模块不提供 WrongNote 关联接口。
+
+| 方法 | 路径 | 请求参数/请求体 | 成功响应 | 错误 |
+|---|---|---|---|---|
+| GET | `/api/wrongs` | Query：`page`、`pageSize`、`keyword`、`category`、`difficulty` 可选 | `200`：`{ data: Wrong[], pagination }` | `400 INVALID_QUERY`、`401 UNAUTHORIZED` |
+| POST | `/api/wrongs` | JSON：`title`、`difficulty`、`solutionLinks` 必填；`problemId`、`category`、`review` 可选 | `201`：`{ data: Wrong }` | `400 INVALID_WRONG_INPUT`、`404 PROBLEM_NOT_FOUND` |
+| GET | `/api/wrongs/{wrongId}` | Path：`wrongId` | `200`：`{ data: Wrong }` | `401 UNAUTHORIZED`、`404 WRONG_NOT_FOUND` |
+| PATCH | `/api/wrongs/{wrongId}` | JSON：至少一个可编辑字段：`problemId`、`title`、`category`、`difficulty`、`review`、`solutionLinks` | `200`：`{ data: Wrong }` | `400 INVALID_WRONG_INPUT`、`404 WRONG_NOT_FOUND`、`404 PROBLEM_NOT_FOUND` |
+| DELETE | `/api/wrongs/{wrongId}` | Path：`wrongId` | `204`：无响应体 | `401 UNAUTHORIZED`、`404 WRONG_NOT_FOUND` |
+
+`problemId` 可在创建或编辑时传入；传入的题目必须属于当前用户，传 `null` 可清除关联。
