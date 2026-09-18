@@ -157,6 +157,8 @@ Todo 响应包含 `isOverdue`：截止日期早于当天且状态不是 `COMPLET
 
 ## WrongNote 错题—题解笔记关联
 
+前端 `frontend/src/stores/wrongNote.ts` 封装上述三个接口；错题详情页支持查看、整体替换、清空和解除单条关联。题解笔记详情页通过错题列表与关联查询展示反向关联错题。
+
 | 方法 | 路径 | 请求参数/请求体 | 成功响应 | 错误 |
 |---|---|---|---|---|
 | GET | `/api/wrongs/{wrongId}/notes` | Path：`wrongId` | `200`：`{ "data": { "wrongId": "uuid", "notes": [Note] } }` | `404 WRONG_NOT_FOUND` |
