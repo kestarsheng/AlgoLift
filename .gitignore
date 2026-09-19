@@ -41,3 +41,10 @@ prisma/*.db-journal
 # Temp files
 *.tmp
 *.temp
+# Agent session config
+.ohmyagent/
+
+# TypeScript build artifacts
+*.tsbuildinfo
+frontend/src/**/*.js
+frontend/vite.config.js
