@@ -85,9 +85,9 @@
 
 前端刷题流程使用分类看板 `/categories`、分类题目列表 `/categories/{categoryId}/problems` 和题目详情 `/problems/{problemId}`；列表支持 `keyword`、`difficulty`、`page`、`pageSize`，详情通过练习记录接口展示日期、首遍正确状态和备注。
 
-前端题目详情页由独立 `problemDetail` 与 `practiceRecord` Pinia Store 驱动：详情加载后展示分类、内部笔记和关联题解笔记；练习记录支持分页、创建和删除，创建成功后回到第 1 页并刷新列表。
+前端题目详情页由独立 `problemDetail` 与 `practiceRecord` Pinia Store 驱动：详情加载成功后同时请求练习记录，分别展示加载中、错误和空状态；练习记录支持 `practicedAt`、`solvedFirstTry`、`remark` 表单，创建成功后回到第 1 页并刷新列表，删除前需确认且失败会保留错误提示。
 
-题目详情管理流程：编辑标题、难度或内部笔记时调用 `PATCH /api/problems/{problemId}`，分类管理使用 `PUT /api/problems/{problemId}/categories` 替换分类 ID 数组（空数组表示取消全部分类），题解笔记管理使用 `PUT /api/problems/{problemId}/notes` 替换笔记 ID 数组（空数组表示取消全部关联）；两类关联保存成功后重新请求题目详情。删除按钮必须确认后调用 `DELETE /api/problems/{problemId}`，成功后返回来源分类列表（带 `categoryId` 查询参数）或分类看板，失败时保留详情并展示错误。
+题目详情管理流程：编辑标题、难度或内部笔记时调用 `PATCH /api/problems/{problemId}`，分类管理使用 `PUT /api/problems/{problemId}/categories` 替换分类 ID 数组（空数组表示取消全部分类），题解笔记管理使用 `PUT /api/problems/{problemId}/notes` 替换笔记 ID 数组（空数组表示取消全部关联）；两类关联保存成功后重新请求题目详情。删除按钮必须确认后调用 `DELETE /api/problems/{problemId}`，成功后返回来源分类列表（带 `categoryId` 查询参数）或分类看板，失败时保留详情并展示错误。分类题目列表进入详情时使用 `/problems/{problemId}?categoryId={categoryId}`，因此删除后可准确返回来源分类。
 
 | 方法 | 路径 | 鉴权 | 请求参数/请求体 | 响应示例 | 错误码 |
 |---|---|---|---|---|---|
