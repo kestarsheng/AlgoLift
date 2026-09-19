@@ -1,9 +1,10 @@
 <!-- Responsive application navigation shared by all frontend routes. -->
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router'; import { useAuthStore } from '../stores/auth';
 const route = useRoute();
 const router = useRouter(); const auth = useAuthStore(); const logout = (): void => { auth.logout(); void router.push('/login'); };
+onMounted(async () => { if (auth.token && !auth.user) await auth.fetchCurrentUser(); });
 const navigation = [{ label: '刷题练习', path: '/categories' }, { label: '错题本', path: '/wrongs' }, { label: '题解笔记', path: '/notes' }];
 const activePath = computed(() => route.path.startsWith('/categories') || route.path.startsWith('/problems') ? '/categories' : route.path.startsWith('/notes') ? '/notes' : '/wrongs');
 </script>
