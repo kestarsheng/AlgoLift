@@ -1,0 +1,17 @@
+import { defineStore } from 'pinia';
+import { api } from '../api';
+import type { Pagination, Todo, TodoPriority, TodoStatus } from '../types';
+interface TodoPage { data: Todo[]; pagination: Pagination }
+interface TodoResponse { data: Todo }
+interface TodoInput { title: string; dueDate?: string; priority: TodoPriority; status: TodoStatus; remark?: string }
+export const useTodoStore = defineStore('todo', { state: () => ({ items: [] as Todo[], pagination: { page: 1, pageSize: 10, total: 0, totalPages: 0 } as Pagination, keyword: '', status: '' as TodoStatus | '', priority: '' as TodoPriority | '', overdue: false, loading: false, saving: false, deleting: false, listError: '', saveError: '', deleteError: '' }), actions: {
+  message(error: unknown, fallback: string): string { return error instanceof Error ? error.message : fallback; },
+  async fetch(): Promise<void> { this.loading = true; this.listError = ''; try { const response = await api.get<TodoPage>('/todos', { params: { page: this.pagination.page, pageSize: this.pagination.pageSize, keyword: this.keyword || undefined, status: this.status || undefined, priority: this.priority || undefined, overdue: this.overdue || undefined } }); this.items = response.data.data; this.pagination = response.data.pagination; } catch (error: unknown) { this.listError = this.message(error, '待办加载失败'); } finally { this.loading = false; } },
+  async search(): Promise<void> { this.pagination.page = 1; await this.fetch(); },
+  async setPage(page: number): Promise<void> { this.pagination.page = page; await this.fetch(); },
+  async create(input: TodoInput): Promise<Todo | null> { this.saving = true; this.saveError = ''; try { const response = await api.post<TodoResponse>('/todos', input); await this.fetch(); return response.data.data; } catch (error: unknown) { this.saveError = this.message(error, '待办保存失败'); return null; } finally { this.saving = false; } },
+  async get(id: string): Promise<Todo | null> { try { return (await api.get<TodoResponse>(`/todos/${id}`)).data.data; } catch (error: unknown) { this.saveError = this.message(error, '待办加载失败'); return null; } },
+  async update(id: string, input: Partial<TodoInput>): Promise<Todo | null> { this.saving = true; this.saveError = ''; try { const response = await api.patch<TodoResponse>(`/todos/${id}`, input); await this.fetch(); return response.data.data; } catch (error: unknown) { this.saveError = this.message(error, '待办保存失败'); return null; } finally { this.saving = false; } },
+  async toggle(todo: Todo): Promise<Todo | null> { return this.update(todo.id, { status: todo.status === 'COMPLETED' ? 'TODO' : 'COMPLETED' }); },
+  async remove(id: string): Promise<boolean> { this.deleting = true; this.deleteError = ''; try { await api.delete(`/todos/${id}`); if (this.items.length === 1 && this.pagination.page > 1) this.pagination.page -= 1; await this.fetch(); return true; } catch (error: unknown) { this.deleteError = this.message(error, '待办删除失败'); return false; } finally { this.deleting = false; } }
+} });

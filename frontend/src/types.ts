@@ -10,3 +10,6 @@ export interface WrongNotesResponse { data: { wrongId: string; notes: Note[] } }
 export interface Category { id: string; name: string; problemCount: number }
 export interface ProblemListItem { id: string; title: string; difficulty: Difficulty; practiceCount: number; noteCount: number; lastPracticedAt: string | null }
 export interface PracticeRecord { id: string; practicedAt: string; solvedFirstTry: boolean; remark: string | null }
+export type TodoPriority = 'P0' | 'P1' | 'P2';
+export type TodoStatus = 'TODO' | 'IN_PROGRESS' | 'COMPLETED';
+export interface Todo { id: string; title: string; dueDate: string | null; priority: TodoPriority; status: TodoStatus; remark: string | null; isOverdue: boolean }
