@@ -2,9 +2,10 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from './stores/auth';
 export const router = createRouter({ history: createWebHistory(), routes: [
-  { path: '/', redirect: '/categories' },
+  { path: '/', redirect: '/dashboard' },
   { path: '/login', component: () => import('./views/Login.vue'), meta: { public: true } },
   { path: '/register', component: () => import('./views/Register.vue'), meta: { public: true } },
+  { path: '/dashboard', component: () => import('./views/Dashboard.vue'), meta: { title: '数据概览' } },
   { path: '/categories', component: () => import('./views/CategoryBoard.vue'), meta: { title: '刷题练习' } },
   { path: '/categories/:categoryId/problems', component: () => import('./views/ProblemList.vue'), meta: { title: '题目列表' } },
   { path: '/problems/:problemId', component: () => import('./views/ProblemDetail.vue'), meta: { title: '题目详情' } },
