@@ -34,6 +34,8 @@
 
 ## Auth
 
+前端登录页调用 `POST /api/auth/login`，注册页调用 `POST /api/auth/register`；成功响应中的 JWT 保存于浏览器 `localStorage.algolift_token`，后续 Axios 请求自动附加 `Authorization: Bearer <token>`。应用启动时使用该 Token 调用 `GET /api/auth/me` 恢复当前用户信息。收到 401 时会清理 Token 和用户状态，并跳转 `/login`；`/login`、`/register` 为公开路由，其余业务路由要求认证，已认证用户访问公开路由会跳转 `/categories`。退出登录会清理本地认证信息并跳转 `/login`。
+
 | 方法 | 路径 | 鉴权 | 请求参数/请求体 | 响应示例 | 错误码 |
 |---|---|---|---|---|---|
 | POST | `/api/auth/register` | 无 | JSON：`email`、`password` 必填；`displayName` 可选 | `201`：`{ "user": User, "token": "jwt" }` | `VALIDATION_ERROR` (400)、`EMAIL_ALREADY_EXISTS` (409) |
