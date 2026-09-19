@@ -13,3 +13,4 @@ export interface PracticeRecord { id: string; practicedAt: string; solvedFirstTr
 export type TodoPriority = 'P0' | 'P1' | 'P2';
 export type TodoStatus = 'TODO' | 'IN_PROGRESS' | 'COMPLETED';
 export interface Todo { id: string; title: string; dueDate: string | null; priority: TodoPriority; status: TodoStatus; remark: string | null; isOverdue: boolean }
+export interface Progress { id: string; title: string; progress: number; progressDate: string; description: string | null; createdAt?: string; updatedAt?: string }

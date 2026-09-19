@@ -151,6 +151,8 @@ Todo 响应包含 `isOverdue`：截止日期早于当天且状态不是 `COMPLET
 | PATCH | `/api/progresses/{progressId}` | JSON：至少一个可编辑字段：`title`、`progress`、`progressDate`、`description` | `200`：`{ data: Progress }` | `400 INVALID_PROGRESS_INPUT`、`401 UNAUTHORIZED`、`404 PROGRESS_NOT_FOUND` |
 | DELETE | `/api/progresses/{progressId}` | Path：`progressId` | `204`：无响应体 | `401 UNAUTHORIZED`、`404 PROGRESS_NOT_FOUND` |
 
+前端学习进度页面入口为 `/progress`，提供按主题/描述关键词搜索、分页、进度条展示，以及新增、编辑和删除操作；表单提交期间按钮会禁用，删除前需要确认。
+
 ## Wrong 错题
 
 错题分类为自由文本，与 Category 模块无关；`solutionLinks` 为 `{ name, url }[]`，URL 仅支持 HTTP/HTTPS。
