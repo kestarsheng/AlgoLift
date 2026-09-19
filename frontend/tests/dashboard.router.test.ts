@@ -1,0 +1,2 @@
+import { describe, expect, it } from 'vitest'; import { router } from '../src/router';
+describe('dashboard route', () => { it('redirects root to dashboard and registers dashboard page', () => { expect(router.getRoutes().find((route) => route.path === '/')?.redirect).toBe('/dashboard'); const route = router.getRoutes().find((item) => item.path === '/dashboard'); expect(route?.meta.title).toBe('数据概览'); expect(typeof route?.components?.default).toBe('function'); }); });
