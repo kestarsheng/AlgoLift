@@ -12,10 +12,10 @@
 - [PracticeRecord](#practicerecord)
 - [ProblemNote](#problemnote)
 - [Note 题解笔记](#note-题解笔记)
-- [Todo](#todo)
+- [Todo 待办](#todo-待办)
 - [Progress 学习进度](#progress-学习进度)
 - [Wrong 错题](#wrong-错题)
-- [WrongNote 错题—题解笔记关联](#wrongnote-错题—题解笔记关联)
+- [WrongNote 错题题解笔记关联](#wrongnote-错题题解笔记关联)
 
 ## 通用约定
 
