@@ -12,5 +12,6 @@ export const router = createRouter({ history: createWebHistory(), routes: [
   { path: '/wrongs/:wrongId', component: () => import('./views/WrongDetail.vue'), meta: { title: '错题详情' } },
   { path: '/notes', component: () => import('./views/NoteList.vue'), meta: { title: '题解笔记' } },
   { path: '/notes/:noteId', component: () => import('./views/NoteDetail.vue'), meta: { title: '笔记详情' } },
+  { path: '/todos', component: () => import('./views/TodoList.vue'), meta: { title: '待办' } },
 ] });
 router.beforeEach(async (to) => { const auth = useAuthStore(); if (auth.token && !auth.user) await auth.fetchCurrentUser(); if (to.meta.public && auth.isAuthenticated) return '/categories'; if (!to.meta.public && !auth.isAuthenticated) return { path: '/login', query: { redirect: to.fullPath } }; });

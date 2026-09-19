@@ -5,8 +5,8 @@ import { useRoute, useRouter } from 'vue-router'; import { useAuthStore } from '
 const route = useRoute();
 const router = useRouter(); const auth = useAuthStore(); const logout = (): void => { auth.logout(); void router.push('/login'); };
 onMounted(async () => { if (auth.token && !auth.user) await auth.fetchCurrentUser(); });
-const navigation = [{ label: '刷题练习', path: '/categories' }, { label: '错题本', path: '/wrongs' }, { label: '题解笔记', path: '/notes' }];
-const activePath = computed(() => route.path.startsWith('/categories') || route.path.startsWith('/problems') ? '/categories' : route.path.startsWith('/notes') ? '/notes' : '/wrongs');
+const navigation = [{ label: '刷题练习', path: '/categories' }, { label: '错题本', path: '/wrongs' }, { label: '题解笔记', path: '/notes' }, { label: '待办', path: '/todos' }];
+const activePath = computed(() => route.path.startsWith('/categories') || route.path.startsWith('/problems') ? '/categories' : route.path.startsWith('/notes') ? '/notes' : route.path.startsWith('/todos') ? '/todos' : '/wrongs');
 </script>
 <template>
   <div v-if="auth.isAuthenticated" class="min-h-screen md:grid md:grid-cols-[220px_1fr]">
