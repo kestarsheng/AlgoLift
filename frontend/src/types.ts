@@ -1,5 +1,6 @@
 // Shared frontend models for list and detail screens.
 export type Difficulty = 'EASY' | 'MEDIUM' | 'HARD';
+export interface User { id: string; email: string; displayName: string | null; theme: string }
 export interface Note { id: string; title: string; content: string | null; solutionLinks?: unknown; createdAt?: string; updatedAt?: string }
 export interface NoteListItem extends Note { problemCount: number; wrongCount: number }
 export interface Wrong { id: string; title: string; category?: string | null; difficulty: Difficulty; review?: string | null; solutionLinks?: unknown }
