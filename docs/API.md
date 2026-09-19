@@ -87,6 +87,8 @@
 
 前端题目详情页由独立 `problemDetail` 与 `practiceRecord` Pinia Store 驱动：详情加载后展示分类、内部笔记和关联题解笔记；练习记录支持分页、创建和删除，创建成功后回到第 1 页并刷新列表。
 
+题目详情管理流程：编辑标题、难度或内部笔记时调用 `PATCH /api/problems/{problemId}`，分类管理使用 `PUT /api/problems/{problemId}/categories` 替换分类 ID 数组（空数组表示取消全部分类），题解笔记管理使用 `PUT /api/problems/{problemId}/notes` 替换笔记 ID 数组（空数组表示取消全部关联）；两类关联保存成功后重新请求题目详情。删除按钮必须确认后调用 `DELETE /api/problems/{problemId}`，成功后返回来源分类列表（带 `categoryId` 查询参数）或分类看板，失败时保留详情并展示错误。
+
 | 方法 | 路径 | 鉴权 | 请求参数/请求体 | 响应示例 | 错误码 |
 |---|---|---|---|---|---|
 | GET | `/api/problems/{problemId}/practice-records` | Bearer JWT | Path：`problemId`；Query：`page`、`pageSize` 可选 | `200`：记录分页 | `INVALID_QUERY` (500)、`PROBLEM_NOT_FOUND` (404) |
