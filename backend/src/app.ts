@@ -21,7 +21,8 @@ import { statsRouter } from './modules/stats/stats.route';
 
 export const app = express();
 
-app.use(cors({ origin: config.frontendUrl, credentials: true }));
+// 生产环境部署到固定域名后，应改成白名单。
+app.use(cors());
 app.use(express.json());
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api', healthRouter);
