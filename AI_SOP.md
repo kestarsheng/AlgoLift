@@ -92,6 +92,111 @@
 
 Git tag 格式：`v1.0.0`、`v1.2.3`，必须带 `v` 前缀。
 
+### 1.8 分支自动命名规则
+
+功能开发前，AI 必须根据任务类型自动生成分支名，不需要询问用户。命名规则如下：
+
+| 任务类型 | 分支前缀 | 示例 |
+|---|---|---|
+| 新功能 | `feat/` | `feat/user-auth`、`feat/category-crud` |
+| 缺陷修复 | `fix/` | `fix/login-validation`、`fix/schema-format` |
+| 重构 | `refactor/` | `refactor/auth-service` |
+| 文档 | `docs/` | `docs/api-swagger` |
+| 配置/构建 | `chore/` | `chore/ci-setup`、`chore/deps-upgrade` |
+
+命名要求：
+- 使用英文小写
+- 单词之间用短横线 `-` 连接
+- 不超过 4 个单词
+- 语义清晰，能看出这个分支在做什么
+
+AI 在开始任务前，必须先执行：
+1. `git checkout develop`
+2. `git pull origin develop`
+3. `git checkout -b <自动生成的分支名>`
+4. `git push -u origin <自动生成的分支名>`
+
+任务完成后，AI 必须执行：
+1. `git checkout develop`
+2. `git merge <分支名>`
+3. `git push origin develop`
+4. 提醒用户是否删除该分支（默认保留，除非用户确认删除）
+
+### 1.9 AI 全自动工作流
+
+AI 必须自己完成以下全部操作，不需要用户手动执行任何 Git 或 GitHub 命令：
+
+1. 根据任务类型，按 1.8 节自动生成分支名。
+2. 从 `develop` 切出新分支。
+3. 写代码。
+4. 写测试（如果适用）。
+5. 跑构建和测试，确认通过。
+6. `git add -A`
+7. `git commit -m "<type>: <描述>"`
+8. `git push -u origin <分支名>`
+9. `gh pr create --base develop --head <分支名> --title "<标题>" --body "<描述>"`
+10. `gh pr checks --watch`，等 CI 跑绿。
+11. `gh pr merge <PR编号> --merge --delete-branch`
+12. `git checkout develop`
+13. `git pull origin develop`
+14. `git branch -d <分支名>`
+15. 向用户报告：做了什么、测试结果、commit hash、PR 链接、当前 `develop` 状态。
+
+**唯一例外**：`main` 分支的合并由用户手动执行。AI 只负责合并到 `develop`。
+
+**如果 CI 失败**：用 `gh run view <run-id> --log-failed` 看报错，修复后重新 push，再等 CI。
+
+**如果 `gh pr merge` 被 Rulesets 阻挡**：停下来告知用户，不要用 `--admin`。
+
+### 1.10 GitHub 操作规范（AI 全自动）
+
+AI 使用 `gh` CLI 完成以下操作，不需要用户手动：
+
+1. 开 PR：`gh pr create --base develop --head <分支名> --title "<标题>" --body "<描述>"`
+2. 查看 CI 状态：`gh pr checks <PR编号>`
+3. 等待 CI 通过：`gh pr checks <PR编号> --watch`
+4. 合并 PR：`gh pr merge <PR编号> --merge --delete-branch`
+5. 如果 CI 失败：`gh run view <run-id> --log-failed`，根据报错修复后重新 push。
+
+如果 `gh` 命令失败（未登录、权限不足等），必须停下来告知用户，不要强行 push。
+
+### 1.11 任务交接规范
+
+每次任务完成后，AI 必须在报告中附上**"下一个任务的建议 Prompt"**。
+
+**强制要求**：这个 Prompt 必须是**完整、可直接复制使用**的，不能是"请参考上一条"或"压缩摘要"。必须包含以下 5 个部分：
+
+**1. 开始前命令**（原样复制）：
+
+    git checkout develop
+    git pull origin develop
+    git status
+    确认当前分支是 develop
+
+**2. 背景**（完整列出）：
+- 已完成模块：<列出所有已完成的模块>
+- 已有接口：见 `docs/API.md`
+- 数据库表：<列出所有表>
+- 已有测试：<套件数、测试数、通过率>
+- 当前 develop commit：<hash>
+
+**3. 本次任务**：<一句话描述要做什么>
+
+**4. 需求**：
+<编号列出具体需求，至少 5 条>
+
+**5. 要求**：
+- 遵守 `AI_SOP.md` 第三章、第四章、第六章。
+- 按 `AI_SOP.md` 1.9 节执行全自动 Git 工作流。
+- 按 `AI_SOP.md` 1.11 节，更新 `docs/API.md`。
+- 完成后报告：接口清单、测试结果、commit hash、PR 链接、当前 `develop` 状态，以及**下一个任务的建议 Prompt（同样按本节格式）**。
+
+**禁止**：
+- 禁止输出"请参考上一条"。
+- 禁止输出压缩摘要。
+- 禁止省略背景信息。
+- 禁止写"从 develop 创建功能分支"这种模糊描述，必须写完整的 Git 命令。
+
 ---
 
 ## 二、.gitignore 规范

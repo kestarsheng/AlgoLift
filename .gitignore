@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+build/
+.vite/
+.cache/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Testing
+coverage/
+
+# Prisma local database
+prisma/*.db
+prisma/*.db-journal
+
+# Temp files
+*.tmp
+*.temp
+# Agent session config
+.ohmyagent/
+
+# TypeScript build artifacts
+*.tsbuildinfo
+frontend/src/**/*.js
+frontend/vite.config.js

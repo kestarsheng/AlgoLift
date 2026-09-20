@@ -1,0 +1,187 @@
+// AlgoLift 数据库模型定义。
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+  @@map("difficulty")
+}
+
+enum TodoPriority {
+  P0
+  P1
+  P2
+  @@map("todo_priority")
+}
+
+enum TodoStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETED
+  @@map("todo_status")
+}
+
+model User {
+  id String @id @default(uuid()) @db.Uuid
+  email String @unique @db.VarChar(255)
+  passwordHash String @map("password_hash") @db.VarChar(255)
+  displayName String? @map("display_name") @db.VarChar(100)
+  theme String @default("blue") @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  categories Category[]
+  problems Problem[]
+  practiceRecords PracticeRecord[]
+  wrongs Wrong[]
+  notes Note[]
+  todos Todo[]
+  progresses Progress[]
+  @@map("users")
+}
+
+model Category {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  name String @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problems ProblemCategory[]
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("categories")
+}
+
+model Problem {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  title String @db.VarChar(255)
+  difficulty Difficulty
+  internalNote String? @map("internal_note") @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categories ProblemCategory[]
+  practiceRecords PracticeRecord[]
+  notes ProblemNote[]
+  wrongs Wrong[]
+  @@unique([userId, title])
+  @@index([userId, difficulty])
+  @@map("problems")
+}
+
+model ProblemCategory {
+  problemId String @map("problem_id") @db.Uuid
+  categoryId String @map("category_id") @db.Uuid
+  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  @@id([problemId, categoryId])
+  @@index([categoryId])
+  @@map("problem_categories")
+}
+
+model PracticeRecord {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  problemId String @map("problem_id") @db.Uuid
+  practicedAt DateTime @map("practiced_at") @db.Date
+  solvedFirstTry Boolean @map("solved_first_try")
+  remark String? @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  @@index([userId, practicedAt])
+  @@index([problemId, practicedAt])
+  @@map("practice_records")
+}
+
+model Wrong {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  problemId String? @map("problem_id") @db.Uuid
+  title String @db.VarChar(255)
+  category String? @db.VarChar(100)
+  difficulty Difficulty
+  review String? @db.Text
+  solutionLinks Json? @map("solution_links")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem Problem? @relation(fields: [problemId], references: [id], onDelete: SetNull)
+  notes WrongNote[]
+  @@index([userId, category])
+  @@index([userId, difficulty])
+  @@map("wrongs")
+}
+
+model Note {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  title String @db.VarChar(255)
+  content String? @db.Text
+  solutionLinks Json? @map("solution_links")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problems ProblemNote[]
+  wrongs WrongNote[]
+  @@index([userId, updatedAt])
+  @@map("notes")
+}
+
+model ProblemNote {
+  problemId String @map("problem_id") @db.Uuid
+  noteId String @map("note_id") @db.Uuid
+  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  @@id([problemId, noteId])
+  @@index([noteId])
+  @@map("problem_notes")
+}
+
+model WrongNote {
+  wrongId String @map("wrong_id") @db.Uuid
+  noteId String @map("note_id") @db.Uuid
+  wrong Wrong @relation(fields: [wrongId], references: [id], onDelete: Cascade)
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  @@id([wrongId, noteId])
+  @@index([noteId])
+  @@map("wrong_notes")
+}
+
+model Todo {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  title String @db.VarChar(255)
+  dueDate DateTime? @map("due_date") @db.Date
+  priority TodoPriority
+  status TodoStatus
+  remark String? @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, status, dueDate])
+  @@map("todos")
+}
+
+model Progress {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  title String @db.VarChar(255)
+  progress Int @default(0)
+  progressDate DateTime @map("progress_date") @db.Date
+  description String? @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, progressDate])
+  @@map("progresses")
+}

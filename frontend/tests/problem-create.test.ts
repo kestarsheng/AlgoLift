@@ -1,0 +1,6 @@
+import { createPinia, setActivePinia } from 'pinia'; import { beforeEach, describe, expect, it, vi } from 'vitest'; import { api } from '../src/api'; import { useProblemListStore } from '../src/stores/problemList';
+vi.mock('../src/api', () => ({ api: { get: vi.fn(), post: vi.fn() } }));
+const page = { data: [], pagination: { page: 1, pageSize: 10, total: 0, totalPages: 0 } };
+describe('problem list store create', () => { beforeEach(() => { setActivePinia(createPinia()); vi.clearAllMocks(); vi.mocked(api.get).mockResolvedValue({ data: page }); });
+it('creates a problem in the current category and refreshes the list', async () => { const store = useProblemListStore(); store.categoryId = 'cat-1'; vi.mocked(api.post).mockResolvedValue({ data: { data: { id: 'p1' } } }); const ok = await store.create({ title: ' 两数之和 ', difficulty: 'EASY', categoryIds: ['cat-1'] }); expect(ok).toBe(true); expect(api.post).toHaveBeenCalledWith('/problems', { title: '两数之和', difficulty: 'EASY', categoryIds: ['cat-1'] }); expect(api.get).toHaveBeenCalled(); });
+it('records save errors', async () => { const store = useProblemListStore(); vi.mocked(api.post).mockRejectedValue(new Error('PROBLEM_TITLE_EXISTS')); expect(await store.create({ title: '两数之和', difficulty: 'EASY' })).toBe(false); expect(store.saveError).toBe('PROBLEM_TITLE_EXISTS'); }); });
