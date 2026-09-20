@@ -16,6 +16,7 @@
 - [Progress 学习进度](#progress-学习进度)
 - [Wrong 错题](#wrong-错题)
 - [WrongNote 错题题解笔记关联](#wrongnote-错题题解笔记关联)
+- [Stats 数据概览统计](#stats-数据概览统计)
 
 ## 通用约定
 
@@ -182,3 +183,13 @@ Dashboard 数据概览入口为 `/dashboard`（根路径 `/` 默认重定向）�
 | DELETE | `/api/wrongs/{wrongId}/notes/{noteId}` | Path：`wrongId`、`noteId` | `204`：无响应体 | `404 WRONG_NOT_FOUND`、`404 WRONG_NOTE_NOT_FOUND` |
 
 以上接口仅允许关联当前用户拥有的 Wrong 和 Note；整体替换为事务操作，校验失败时保留原有关联。
+
+## Stats 数据概览统计
+
+为数据概览页提供聚合数据，避免前端拼接多个分页接口；所有结果按当前用户隔离。
+
+| 方法 | 路径 | 请求参数/请求体 | 成功响应 | 错误 |
+|---|---|---|---|---|
+| GET | `/api/stats/dashboard` | Query：`days` 可选（统计窗口天数，1–365，默认 119） | `200`：`{ "difficultyCounts": { "EASY": 0, "MEDIUM": 0, "HARD": 0 }, "dailyPractice": [{ "date": "YYYY-MM-DD", "count": 2 }] }` | `401 UNAUTHORIZED` |
+
+`difficultyCounts` 为当前用户全部题目按难度计数；`dailyPractice` 为统计窗口内每天的练习记录条数，仅返回有记录的日期，缺省日期由前端补零；日期由练习记录的 `practicedAt`（UTC 午夜）转换而来。
