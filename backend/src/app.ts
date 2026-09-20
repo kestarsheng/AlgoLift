@@ -17,6 +17,7 @@ import { todoRouter } from './modules/todo/todo.route';
 import { progressRouter } from './modules/progress/progress.route';
 import { wrongRouter } from './modules/wrong/wrong.route';
 import { wrongNotesRouter } from './modules/wrong-notes/wrong-notes.route';
+import { statsRouter } from './modules/stats/stats.route';
 
 export const app = express();
 
@@ -34,6 +35,7 @@ app.use('/api', todoRouter);
 app.use('/api', progressRouter);
 app.use('/api', wrongRouter);
 app.use('/api', wrongNotesRouter);
+app.use('/api', statsRouter);
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
 
