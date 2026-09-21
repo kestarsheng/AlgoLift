@@ -6,7 +6,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://algolift-backend.onrender.com/api/$1"
+      "destination": "https://usher-museum-coliseum.ngrok-free.dev/api/$1"
     },
     {
       "source": "/(.*)",
