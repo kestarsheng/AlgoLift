@@ -197,6 +197,39 @@ AI 使用 `gh` CLI 完成以下操作，不需要用户手动：
 - 禁止省略背景信息。
 - 禁止写"从 develop 创建功能分支"这种模糊描述，必须写完整的 Git 命令。
 
+### 1.12 生产发布规范
+
+功能开发完成并合入 `develop` 后，**不会自动上线**。要上线，必须把 `develop` 合到 `main`：
+
+1. 开 PR：`develop` → `main`。
+2. 等 CI 绿。
+3. 合并。
+4. Vercel 自动触发 Production 部署。
+5. 在 `main` 上打 tag（版本号）。
+
+**注意：AI 只负责开 PR，不自动合并到 `main`。生产发布由用户手动确认后合并。**
+
+> **为什么必须有这一步**：Vercel 的 **Production 环境跟踪 `main` 分支**。合入 `develop` 只会产生 Preview 部署，**线上不会发生任何变化**。也就是说，只合到 `develop` 的修复，线上永远不会生效。
+
+**AI 侧（只做到第 1 步，然后停下）**：
+
+    git checkout develop
+    git pull origin develop
+    gh pr create --base main --head develop --title "<标题>" --body-file <描述文件>
+
+开完 PR 后，AI 必须向用户报告 PR 链接并**等待用户自行合并**，不得代为合并到 `main`。
+
+**用户侧（第 2–5 步）**：
+
+    gh pr checks <PR编号> --watch
+    gh pr merge <PR编号> --merge
+    git checkout main
+    git pull origin main
+    git tag vX.Y.Z
+    git push origin vX.Y.Z
+
+**与 1.2 / 1.4 中 `release/x.x.x` 分支的关系**：`release/x.x.x` 分支目前**未实际使用**。已有的两次发布（`v0.1.0` 对应 PR #40、`v0.1.1` 对应 PR #43）都是 `develop` 直接合到 `main` 后打 tag，即上面的 5 步流程。1.4 的 release 分支流程可作为将来需要“发布前冻结”时的备选。
+
 ---
 
 ## 二、.gitignore 规范
@@ -311,6 +344,15 @@ AI 使用 `gh` CLI 完成以下操作，不需要用户手动：
 - 后端返回统一的错误格式：`{ code, message }`。
 - 前端使用 Axios 拦截器统一处理后端返回的错误。
 
+### 3.6 前端代码规范
+
+- Vue 3 统一使用 `<script setup>` 语法，不使用 Options API。
+- 每个业务模块独立 Pinia Store，禁止全局巨型 Store。
+- Vue Router 使用懒加载，形如 `component: () => import('./views/Xxx.vue')`。
+- Tailwind 工具类优先，禁止新增自定义 CSS 文件（全项目只保留 `frontend/src/style.css` 一个全局样式入口）。
+- 颜色使用主题 CSS 变量，禁止硬编码颜色值。
+- 禁止使用 `any`。
+
 ---
 
 ## 四、开发流程（分步执行，禁止一次性生成）
@@ -397,22 +439,37 @@ AI 使用 `gh` CLI 完成以下操作，不需要用户手动：
 
 ## 六、技术栈约束
 
+### 6.1 实际技术栈
+
 | 层级 | 技术选型 | 约束 |
 |---|---|---|
-| 前端 | Vue 3 + Vite + TypeScript | 使用 `<script setup>` 语法 |
-| 前端样式 | Tailwind CSS | 禁止写自定义 CSS 文件，全部用 Tailwind 类 |
-| 前端状态 | Pinia | 每个模块一个 Store，禁止全局巨型 Store |
-| 前端路由 | Vue Router | 使用懒加载路由 |
-| 后端 | Node.js + Express + TypeScript | 使用 `express.Router()` 分模块 |
-| ORM | Prisma | 所有数据库操作必须通过 Prisma，禁止裸 SQL |
-| 数据库 | PostgreSQL (Neon) | 使用 Neon 提供的 Pooled Connection String |
-| 鉴权 | JWT + bcrypt | Token 存 httpOnly Cookie 或 Authorization Header |
-| API 文档 | Swagger | 每个接口必须写 Swagger 注释 |
-| 部署（前端） | Vercel | 构建命令 `npm run build` |
-| 部署（后端） | Render | 注意冷启动，环境变量通过 Render Dashboard 配置 |
-| CI/CD | GitHub Actions | 每次 push 到 `main` 自动跑 lint + test |
+| 前端 | Vue 3 + Vite + TypeScript + Pinia + Vue Router + Tailwind CSS + Axios + Vitest | 详见 3.6 前端代码规范 |
+| 后端 | Node.js + Express + TypeScript + Prisma + JWT + bcrypt + Swagger + Jest | 使用 `express.Router()` 分模块 |
+| 数据库 | PostgreSQL（Neon，Pooled Connection） | 使用 Neon 的 Pooled Connection String；所有数据库操作必须通过 Prisma，禁止裸 SQL |
+| 鉴权 | JWT + bcrypt | Token 通过 `Authorization: Bearer <token>` 头传递 |
+| API 文档 | Swagger（swagger-jsdoc + swagger-ui-express） | 每个接口必须写 Swagger 注释 |
+| 前端部署 | Vercel（**Production 跟踪 `main`**） | 构建命令 `npm run build`；发布流程见 1.12 |
+| 后端部署 | **本地 + ngrok（临时方案，待迁移到腾讯云轻量服务器）** | 见 6.2 当前部署架构 |
+| CI | GitHub Actions | **目前只有 `backend` job**，前端 Vitest 尚未进 CI |
 | 主题系统 | CSS 变量 + data-theme 属性 | 颜色全部用 CSS 变量，禁止硬编码颜色值；所有组件必须通过 var(--color-xxx) 引用颜色 |
 | 主题持久化 | localStorage | 用户选择的主题必须持久化 |
+
+### 6.2 当前部署架构
+
+| 组件 | 位置 | 说明 |
+|---|---|---|
+| 前端 | Vercel | 环境变量 `VITE_API_BASE_URL` 指向 ngrok 后端地址 |
+| 后端 | 本地 `localhost:3000`，通过 ngrok 暴露 | 由开发者本机进程提供服务，命令形如 `ngrok http 3000` |
+| 数据库 | Neon | 云端 PostgreSQL，使用 Pooled Connection |
+
+**临时方案的限制（必须知道）**：
+
+- **电脑必须开机**：后端跑在本地，机器关机或休眠后，线上接口全部不可用（前端会统一显示「请求失败」）。
+- **ngrok 地址每次重启会变**：免费版 ngrok 每次启动分配新的随机域名，地址一变前端就失联，**必须同步更新 Vercel 的 `VITE_API_BASE_URL` 并重新部署**（见 8.3）。
+- **请求依赖 ngrok 专用请求头**：`frontend/src/api.ts` 的请求拦截器附加了 `ngrok-skip-browser-warning: true`，用于绕过 ngrok 免费版给浏览器型请求返回的 HTML 插页。**迁移到自建后端后，这个头应当一并移除。**
+- **前端无 CI 保障**：`.github/workflows/ci.yml` 目前只有 `backend` job，前端测试只能靠本地 `npm test`（Vitest）保证，提交前必须自己跑。
+
+**未来计划**：把后端迁移到**腾讯云轻量服务器**，形成稳定的公网地址。届时建议前端改为同源 `/api`（删掉 `VITE_API_BASE_URL`），由 `frontend/vercel.json` 的 rewrite 在 Vercel 边缘做服务端代理，从根上消除跨源 CORS 问题。
 
 ---
 
@@ -427,18 +484,33 @@ AI 使用 `gh` CLI 完成以下操作，不需要用户手动：
 ## 八、环境变量管理
 
 ### 8.1 本地开发
-- 根目录创建 `.env`，从 `.env.example` 复制并填入真实值。
+- 后端：`backend/.env`，从 `backend/.env.example` 复制并填入真实值。
+- 前端：`frontend/.env` 可选。本地开发留空即可，Vite 开发服务器会把 `/api` 代理到 `http://localhost:3000`（见 `frontend/vite.config.ts` 的 `server.proxy`）。
 - `.env` 必须加入 `.gitignore`，绝不提交。
 - `.env.example` 只列 key，不填真实值，必须提交。
 
-### 8.2 后端（Render）
-- 在 Render Dashboard → Environment 中配置所有环境变量。
-- 必须配置：`DATABASE_URL`、`JWT_SECRET`、`PORT`。
+### 8.2 后端（本地 + ngrok）
+
+后端当前跑在开发者本机的 `localhost:3000`，通过 ngrok 隧道暴露到公网。
+
+- 本地变量写在 `backend/.env`（从 `backend/.env.example` 复制），绝不提交。
+- 必须配置：`DATABASE_URL`、`JWT_SECRET`、`PORT`，以及 `FRONTEND_URL`（CORS 允许的前端源）。
 - 使用 Neon 的 Pooled Connection String 作为 `DATABASE_URL`。
+- ngrok 隧道指向本地端口：`ngrok http 3000`。
+
+> **注意**：`backend/render.yaml` 与根目录 `DEPLOYMENT.md` 描述的是**尚未启用的 Render 方案**，当前不生效。迁移到腾讯云轻量服务器时应一并重写这两处。
 
 ### 8.3 前端（Vercel）
+
 - 在 Vercel Project Settings → Environment Variables 中配置。
-- 必须配置：`VITE_API_BASE_URL`（指向 Render 后端地址）。
+- 必须配置：`VITE_API_BASE_URL`，**指向 ngrok 暴露的后端地址 + `/api`**（例如 `https://<xxx>.ngrok-free.dev/api`）。
+
+**`VITE_API_BASE_URL` 说明**：
+
+- 该变量是**构建期**注入的，前端通过 `import.meta.env.VITE_API_BASE_URL` 读取（见 `frontend/src/api.ts`），会被打进 JS 产物。
+- **ngrok 地址变了，必须修改这个环境变量并重新部署。** 仅修改变量不会自动生效——因为值是构建期写死的，必须**重新触发一次部署**（Vercel 上的 Redeploy，或推一个新提交）才会重新构建。
+- 未设置该变量时，`frontend/src/api.ts` 会回落到同源相对路径 `/api`，此时由 `frontend/vercel.json` 的 rewrite 在 Vercel 边缘代理到后端。
+- **`frontend/vercel.json` 里 `/api` rewrite 的 destination 目前仍指向旧的 `algolift-backend.onrender.com`**。若要改用同源方案，必须先把这个 destination 改成真实后端地址，否则会代理到一个已失效的地址。
 
 ### 8.4 命名规范
 - 后端环境变量：`UPPER_SNAKE_CASE`（如 `DATABASE_URL`）。
@@ -446,13 +518,15 @@ AI 使用 `gh` CLI 完成以下操作，不需要用户手动：
 
 ### 8.5 `.env.example` 示例
 
-    # 后端
-    DATABASE_URL="postgresql://user:password@host:5432/dbname?sslmode=require"
-    JWT_SECRET="your-secret-key"
+    # 后端（backend/.env.example）
+    DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
+    JWT_SECRET="replace-with-a-long-random-secret"
     PORT=3000
+    FRONTEND_URL="http://localhost:5173"
 
-    # 前端
-    VITE_API_BASE_URL="http://localhost:3000/api"
+    # 前端（frontend/.env.example）
+    # 本地开发可留空，默认走 Vite 开发服务器的 /api 代理
+    # VITE_API_BASE_URL="http://localhost:3000/api"
 
 ---
 
@@ -464,8 +538,8 @@ AI 使用 `gh` CLI 完成以下操作，不需要用户手动：
 3. 检查 `prisma/migrations/` 下生成的 SQL 文件，确认无误。
 4. 执行 `npx prisma generate` 更新 Prisma Client。
 
-### 9.2 生产部署流程
-1. 在 Render 的部署命令中加入 `npx prisma migrate deploy`。
+### 9.2 生产数据库迁移流程
+1. 对生产库（Neon）执行 `npx prisma migrate deploy`。
 2. 禁止在生产环境执行 `migrate dev`。
 
 ### 9.3 禁止事项
