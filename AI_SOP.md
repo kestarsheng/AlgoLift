@@ -353,6 +353,15 @@ AI 使用 `gh` CLI 完成以下操作，不需要用户手动：
 - 颜色使用主题 CSS 变量，禁止硬编码颜色值。
 - 禁止使用 `any`。
 
+### 3.7 依赖版本约束（前后端通用）
+
+- **禁止使用 `"latest"` 作为依赖版本**：`package.json` 中所有 `dependencies` 与 `devDependencies` 必须写**精确版本号**（形如 `"1.20.0"`），不得出现 `"latest"`、`"*"`、`"x"` 等浮动标记。
+- **禁止使用脱字符 `^` 或波浪号 `~` 范围**：例如 `"^5.22.0"`、`"~4.3.3"` 一律不允许，必须改为对应的精确版本。范围语义会让 `npm install` 在不同时间拉到不兼容的新版本，破坏 CI 可复现性（典型事故：`undici 8` 与 Node 20 冲突即由 `"latest"` 引入）。
+- **版本来源**：固定版本时，以当前 `package-lock.json` 中实际安装的精确版本为准（`packages["node_modules/<pkg>"].version`），不得凭空填写。
+- **lockfile 必须提交**：`package-lock.json` 与 `package.json` 必须成对提交，且二者完全一致。修改 `package.json` 版本后，必须删除旧 lockfile 重新 `npm install` 生成全新 lockfile，再提交。
+- **升级依赖时**：先在分支上单独把目标包改为新精确版本，跑通构建+测试+CI 后再合并；禁止批量 `"latest"` 升级。
+- **CI Node 版本与依赖联动**：若某依赖（如 `jsdom` → `undici`）要求更高版本的 Node，应在 `.github/workflows/ci.yml` 对应 job 中显式声明，并在升级该依赖时同步检查。
+
 ---
 
 ## 四、开发流程（分步执行，禁止一次性生成）
