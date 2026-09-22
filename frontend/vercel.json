@@ -6,7 +6,8 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://algolift-backend.onrender.com/api/$1"
+      "destination": "https://${BACKEND_ORIGIN}/api/$1",
+      "env": ["BACKEND_ORIGIN"]
     },
     {
       "source": "/(.*)",

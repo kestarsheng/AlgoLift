@@ -450,7 +450,7 @@ AI 使用 `gh` CLI 完成以下操作，不需要用户手动：
 | API 文档 | Swagger（swagger-jsdoc + swagger-ui-express） | 每个接口必须写 Swagger 注释 |
 | 前端部署 | Vercel（**Production 跟踪 `main`**） | 构建命令 `npm run build`；发布流程见 1.12 |
 | 后端部署 | **本地 + ngrok（临时方案，待迁移到腾讯云轻量服务器）** | 见 6.2 当前部署架构 |
-| CI | GitHub Actions | **目前只有 `backend` job**，前端 Vitest 尚未进 CI |
+| CI | GitHub Actions | **含 `backend` 与 `frontend` 两个 job**：后端跑迁移+构建+Jest；前端跑 `npm ci` + `npm run build` + Vitest |
 | 主题系统 | CSS 变量 + data-theme 属性 | 颜色全部用 CSS 变量，禁止硬编码颜色值；所有组件必须通过 var(--color-xxx) 引用颜色 |
 | 主题持久化 | localStorage | 用户选择的主题必须持久化 |
 
@@ -467,7 +467,7 @@ AI 使用 `gh` CLI 完成以下操作，不需要用户手动：
 - **电脑必须开机**：后端跑在本地，机器关机或休眠后，线上接口全部不可用（前端会统一显示「请求失败」）。
 - **ngrok 地址每次重启会变**：免费版 ngrok 每次启动分配新的随机域名，地址一变前端就失联，**必须同步更新 Vercel 的 `VITE_API_BASE_URL` 并重新部署**（见 8.3）。
 - **请求依赖 ngrok 专用请求头**：`frontend/src/api.ts` 的请求拦截器附加了 `ngrok-skip-browser-warning: true`，用于绕过 ngrok 免费版给浏览器型请求返回的 HTML 插页。**迁移到自建后端后，这个头应当一并移除。**
-- **前端无 CI 保障**：`.github/workflows/ci.yml` 目前只有 `backend` job，前端测试只能靠本地 `npm test`（Vitest）保证，提交前必须自己跑。
+- **前端已进 CI**：`.github/workflows/ci.yml` 含 `frontend` job，每次 push/PR 自动跑 `npm ci` + `npm run build` + `npm test`（Vitest）。
 
 **未来计划**：把后端迁移到**腾讯云轻量服务器**，形成稳定的公网地址。届时建议前端改为同源 `/api`（删掉 `VITE_API_BASE_URL`），由 `frontend/vercel.json` 的 rewrite 在 Vercel 边缘做服务端代理，从根上消除跨源 CORS 问题。
 
@@ -498,7 +498,7 @@ AI 使用 `gh` CLI 完成以下操作，不需要用户手动：
 - 使用 Neon 的 Pooled Connection String 作为 `DATABASE_URL`。
 - ngrok 隧道指向本地端口：`ngrok http 3000`。
 
-> **注意**：`backend/render.yaml` 与根目录 `DEPLOYMENT.md` 描述的是**尚未启用的 Render 方案**，当前不生效。迁移到腾讯云轻量服务器时应一并重写这两处。
+> **注意**：Render 方案（原 `backend/render.yaml`）**从未启用**，`render.yaml` 已从仓库删除；根目录 `DEPLOYMENT.md` 已重写为「前端 Vercel + 后端本地/ngrok + 数据库 Neon」的真实架构。
 
 ### 8.3 前端（Vercel）
 
@@ -510,7 +510,7 @@ AI 使用 `gh` CLI 完成以下操作，不需要用户手动：
 - 该变量是**构建期**注入的，前端通过 `import.meta.env.VITE_API_BASE_URL` 读取（见 `frontend/src/api.ts`），会被打进 JS 产物。
 - **ngrok 地址变了，必须修改这个环境变量并重新部署。** 仅修改变量不会自动生效——因为值是构建期写死的，必须**重新触发一次部署**（Vercel 上的 Redeploy，或推一个新提交）才会重新构建。
 - 未设置该变量时，`frontend/src/api.ts` 会回落到同源相对路径 `/api`，此时由 `frontend/vercel.json` 的 rewrite 在 Vercel 边缘代理到后端。
-- **`frontend/vercel.json` 里 `/api` rewrite 的 destination 目前仍指向旧的 `algolift-backend.onrender.com`**。若要改用同源方案，必须先把这个 destination 改成真实后端地址，否则会代理到一个已失效的地址。
+- **`frontend/vercel.json` 里 `/api` rewrite 的 destination 使用环境变量 `BACKEND_ORIGIN`**（`https://${BACKEND_ORIGIN}/api/$1`，通过 `env` 字段声明）。在 Vercel 上配置 `BACKEND_ORIGIN` 为当前 ngrok 域名（不带 `https://`）即可，无需写死在代码里；ngrok 地址变化时只需更新 Vercel 环境变量并重新部署。
 
 ### 8.4 命名规范
 - 后端环境变量：`UPPER_SNAKE_CASE`（如 `DATABASE_URL`）。
