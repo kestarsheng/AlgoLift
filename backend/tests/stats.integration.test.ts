@@ -38,6 +38,9 @@ describe('GET /api/stats/dashboard', () => {
     expect(response.body.difficultyCounts).toEqual({ EASY: 1, MEDIUM: 1, HARD: 0 });
     const today = new Date().toISOString().slice(0, 10);
     expect(response.body.dailyPractice).toEqual([{ date: today, count: 2 }]);
+    expect(response.body.totalProblems).toBe(2);
+    expect(response.body.completedProblems).toBe(1);
+    expect(response.body.accuracy).toBe(50);
   });
 
   it('caps the days window parameter to the allowed range', async () => {

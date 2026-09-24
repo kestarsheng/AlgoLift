@@ -32,14 +32,13 @@ describe('dashboard store', () => {
     expect(store.hasErrors).toBe(true);
   });
 
-  it('derives totals, accuracy fallback, and today count from stats and wrongs', () => {
+  it('derives totals, accuracy, and today count from backend stats fields', () => {
     const store = useDashboardStore();
-    store.stats.data = { difficultyCounts: { EASY: 5, MEDIUM: 3, HARD: 2 }, dailyPractice: [{ date: new Date().toISOString().slice(0, 10), count: 4 }] };
-    store.wrongs.data.pagination.total = 1;
+    store.stats.data = { difficultyCounts: { EASY: 5, MEDIUM: 3, HARD: 2 }, dailyPractice: [{ date: new Date().toISOString().slice(0, 10), count: 4 }], totalProblems: 10, completedProblems: 7, accuracy: 85 };
     expect(store.totalProblems).toBe(10);
-    expect(store.completedProblems).toBe(4);
+    expect(store.completedProblems).toBe(7);
     expect(store.todayCount).toBe(4);
-    expect(store.accuracy).toBe(90);
+    expect(store.accuracy).toBe(85);
   });
 
   it('derives category mastery from progress titles', async () => {

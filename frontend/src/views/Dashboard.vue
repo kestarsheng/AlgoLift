@@ -51,7 +51,7 @@ const greeting = computed(() => {
 
       <template v-else>
         <div class="mb-3.5 grid shrink-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
-          <StatCard label="总题数 · 进度" :hero="true" tone="blue" class="sm:col-span-2 lg:col-span-1">
+          <StatCard label="总刷题 · 进度" :hero="true" tone="blue" class="sm:col-span-2 lg:col-span-1">
             <template #icon>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3"><path d="M22 10v6M2 10l6 6M2 4l6 6M22 4l-6 6"/><path d="M6 22h12"/><path d="M12 22V10"/></svg>
             </template>
@@ -60,7 +60,7 @@ const greeting = computed(() => {
               <span class="font-mono text-[35px] font-bold leading-none tracking-tight text-[var(--color-text)]">{{ store.totalProblems }}</span>
               <div class="flex items-center gap-4 text-base text-[var(--color-text-secondary)]">
                 <span>已完成 <b class="font-mono font-semibold text-[var(--color-text)]">{{ store.completedProblems }}</b></span>
-                <span>正确率 <b class="font-mono font-semibold text-[var(--color-text)]">{{ store.accuracy }}%</b></span>
+                <span>待复习 <b class="font-mono font-semibold text-[var(--color-text)]">{{ store.totalProblems - store.completedProblems }}</b></span>
               </div>
             </div>
           </StatCard>
@@ -70,7 +70,7 @@ const greeting = computed(() => {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
             </template>
             <span class="mt-1 font-mono text-[27px] font-bold tracking-tight text-[var(--color-text)]">{{ store.accuracy }}%</span>
-            <p class="mt-0.5 text-[15px] text-[var(--color-text-muted)]">基于错题占比估算</p>
+            <p class="mt-0.5 text-[15px] text-[var(--color-text-muted)]">基于一遍做对率</p>
           </StatCard>
 
           <StatCard label="今日刷题" tone="slate">
