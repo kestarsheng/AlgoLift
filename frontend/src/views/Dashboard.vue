@@ -1,10 +1,134 @@
+<!-- 数据概览页：统计卡/分类掌握度/热力图/建议/待办，组装自 dashboard store 与 todo store。 -->
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'; import { RouterLink } from 'vue-router'; import { useAuthStore } from '../stores/auth'; import { useDashboardStore } from '../stores/dashboard'; import type { HeatmapDay } from '../stores/dashboard';
-const auth = useAuthStore(); const store = useDashboardStore(); onMounted(() => { void store.fetch(); void store.fetchStats(); });
-const stats = computed(() => [{ label: '分类', value: store.categories.data.length, path: '/categories' }, { label: '题目', value: store.problems.data.pagination.total, path: '/categories' }, { label: '错题', value: store.wrongs.data.pagination.total, path: '/wrongs' }, { label: '笔记', value: store.notes.data.pagination.total, path: '/notes' }, { label: '待办', value: store.todos.data.pagination.total, path: '/todos' }]);
-const allEmpty = computed(() => !store.loading && stats.value.every((item) => item.value === 0) && !store.latestProgress);
-const difficultyRows = computed(() => { const counts = store.stats.data.difficultyCounts; const max = Math.max(counts.EASY, counts.MEDIUM, counts.HARD, 1); return [{ key: 'EASY', label: '简单', count: counts.EASY }, { key: 'MEDIUM', label: '中等', count: counts.MEDIUM }, { key: 'HARD', label: '困难', count: counts.HARD }].map((row) => ({ ...row, width: Math.round((row.count / max) * 100) })); });
-const practiceTotal = computed(() => store.stats.data.dailyPractice.reduce((sum, item) => sum + item.count, 0));
-const dayClass = (day: HeatmapDay): string[] => { if (day.level < 0) return ['invisible']; if (day.level === 0) return ['bg-[var(--color-accent-light)]/60']; return [`bg-[var(--color-accent)]/${[0, 25, 45, 70, 100][day.level]}`]; };
+import { computed, onMounted } from 'vue';
+import { RouterLink } from 'vue-router';
+import { useAuthStore } from '../stores/auth';
+import { useDashboardStore } from '../stores/dashboard';
+import StatCard from '../components/dashboard/StatCard.vue';
+import ProgressRing from '../components/dashboard/ProgressRing.vue';
+import MasteryBar from '../components/dashboard/MasteryBar.vue';
+import Heatmap from '../components/dashboard/Heatmap.vue';
+import RecentActivity from '../components/dashboard/RecentActivity.vue';
+import Suggestions from '../components/dashboard/Suggestions.vue';
+import TodoSummary from '../components/dashboard/TodoSummary.vue';
+
+const auth = useAuthStore();
+const store = useDashboardStore();
+onMounted(() => { void store.fetch(); void store.fetchStats(); });
+
+const allEmpty = computed(() => !store.loading && store.totalProblems === 0 && store.categories.data.length === 0 && !store.latestProgress);
+
+const greeting = computed(() => {
+  const hour = new Date().getHours();
+  if (hour < 6) return '夜深了，注意休息';
+  if (hour < 12) return '早上好，今天继续加油';
+  if (hour < 18) return '下午好，保持节奏';
+  return '晚上好，来刷一题收尾';
+});
 </script>
-<template><section class="mx-auto max-w-6xl p-5 md:p-10"><header class="border-b border-[var(--color-border)] pb-6"><p class="text-xs uppercase tracking-[0.18em] text-[var(--color-accent)]">Your learning desk</p><h2 class="mt-2 text-3xl font-semibold">你好，{{ auth.user?.displayName || '学习者' }}</h2><p class="mt-2 opacity-70">从今天的一个小进步开始，持续把算法能力练成肌肉记忆。</p></header><p v-if="store.loading" role="status" class="py-12 text-center">正在加载数据概览…</p><template v-else><p v-if="store.hasErrors" role="alert" class="mt-5 border border-amber-300 bg-amber-50 p-4 text-amber-800">部分数据加载失败，已展示其余可用内容。</p><div v-if="allEmpty" class="mt-6 border border-dashed p-10 text-center"><h3 class="font-semibold">还没有学习数据</h3><p class="mt-2 opacity-70">先去刷一道题，开启你的学习记录。</p><RouterLink class="mt-4 inline-block underline" to="/categories">开始刷题</RouterLink></div><template v-else><div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5"><RouterLink v-for="item in stats" :key="item.label" :to="item.path" class="border border-[var(--color-border)] p-4 hover:border-[var(--color-accent)]"><p class="text-sm opacity-70">{{ item.label }}</p><p class="mt-2 text-3xl font-semibold">{{ item.value }}</p></RouterLink></div><section class="mt-6 grid gap-6 lg:grid-cols-2"><article class="border p-5"><h3 class="font-semibold">总体学习进度</h3><p class="mt-4 text-4xl font-semibold">{{ store.averageProgress }}%</p><div class="mt-3 h-3 bg-black/10"><div class="h-3 bg-[var(--color-accent)]" :style="{ width: `${store.averageProgress}%` }" role="progressbar" :aria-valuenow="store.averageProgress" aria-valuemin="0" aria-valuemax="100" /></div><p class="mt-3 text-sm opacity-70">{{ store.latestProgress ? `最近记录：${store.latestProgress.title} · ${store.latestProgress.progress}%` : '还没有进度记录' }}</p></article><article class="border p-5"><h3 class="font-semibold">待办摘要</h3><div class="mt-4 grid grid-cols-3 gap-2 text-center"><div><p class="text-2xl font-semibold">{{ store.todos.data.pagination.total }}</p><p class="text-xs opacity-70">总数</p></div><div><p class="text-2xl font-semibold">{{ store.incompleteTodos.data.pagination.total }}</p><p class="text-xs opacity-70">未完成</p></div><div><p class="text-2xl font-semibold text-red-700">{{ store.overdueTodos.data.pagination.total }}</p><p class="text-xs opacity-70">逾期</p></div></div><RouterLink class="mt-5 inline-block text-sm underline" to="/todos">管理待办 →</RouterLink></article></section><section class="mt-6 border p-5"><div class="flex flex-wrap items-center justify-between gap-2"><h3 class="font-semibold">练习图表</h3><span class="text-xs opacity-70">近 119 天 · 累计练习 {{ practiceTotal }} 次</span></div><p v-if="store.stats.error" role="alert" class="mt-3 border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">统计数据加载失败：{{ store.stats.error }}</p><div v-else-if="store.statsLoading" role="status" class="mt-4 text-sm opacity-70">正在加载统计数据…</div><div v-else class="mt-5 grid gap-6 lg:grid-cols-2"><article><h4 class="text-sm font-semibold opacity-80">难度分布</h4><ul class="mt-3 space-y-2"><li v-for="row in difficultyRows" :key="row.key" class="flex items-center gap-3"><span class="w-10 shrink-0 text-sm">{{ row.label }}</span><div class="h-3 flex-1 bg-[var(--color-accent-light)]/60"><div class="h-3 bg-[var(--color-accent)]" :style="{ width: `${row.width}%` }"></div></div><span class="w-8 shrink-0 text-right text-sm">{{ row.count }}</span></li></ul></article><article><h4 class="text-sm font-semibold opacity-80">刷题热力图</h4><div class="mt-3 grid grid-flow-col grid-rows-7 gap-[3px]" role="img" aria-label="近 119 天刷题热力图"><div v-for="(day, index) in store.heatmapDays" :key="`${day.date}-${index}`" class="h-3 w-3" :class="dayClass(day)" :title="day.date ? `${day.date}：${day.count} 次` : undefined"></div></div><div class="mt-3 flex items-center gap-2 text-xs opacity-70"><span>少</span><span class="h-3 w-3 bg-[var(--color-accent-light)]/60"></span><span class="h-3 w-3 bg-[var(--color-accent)]/25"></span><span class="h-3 w-3 bg-[var(--color-accent)]/45"></span><span class="h-3 w-3 bg-[var(--color-accent)]/70"></span><span class="h-3 w-3 bg-[var(--color-accent)]"></span><span>多</span></div></article></div></section><section class="mt-6 border p-5"><div class="flex items-center justify-between"><h3 class="font-semibold">最近学习进度</h3><RouterLink class="text-sm underline" to="/progress">查看全部</RouterLink></div><ul v-if="store.progress.data.data.length" class="mt-4 grid gap-3 md:grid-cols-3"><li v-for="item in store.progress.data.data" :key="item.id" class="border p-3"><p class="font-semibold">{{ item.title }}</p><p class="mt-1 text-sm opacity-70">{{ item.progressDate }} · {{ item.progress }}%</p></li></ul><p v-else class="mt-4 text-sm opacity-70">暂无学习进度记录。</p></section><nav class="mt-6 flex flex-wrap gap-3" aria-label="快捷入口"><RouterLink v-for="item in [{ label: '刷题', path: '/categories' }, { label: '错题本', path: '/wrongs' }, { label: '笔记', path: '/notes' }, { label: '待办', path: '/todos' }, { label: '学习进度', path: '/progress' }]" :key="item.path" class="border px-4 py-2 text-sm hover:border-[var(--color-accent)]" :to="item.path">{{ item.label }} →</RouterLink></nav></template></template></section></template>
+<template>
+  <section class="mx-auto flex w-full max-w-[1280px] flex-col">
+    <header class="mb-4 shrink-0">
+      <h1 class="text-[25px] font-bold tracking-tight text-[var(--color-text)] [font-family:var(--font-heading)]">数据概览</h1>
+      <div class="mt-0.5 flex items-center gap-2 text-[17px] text-[var(--color-text-muted)]">
+        {{ greeting }}，{{ auth.user?.displayName || '学习者' }}
+        <span v-if="store.streakDays > 0" class="inline-flex items-center gap-1 text-base font-semibold text-[var(--color-accent)]">
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+          连续 {{ store.streakDays }} 天
+        </span>
+      </div>
+    </header>
+
+    <p v-if="store.loading" role="status" class="py-12 text-center">正在加载数据概览…</p>
+    <template v-else>
+      <p v-if="store.hasErrors" role="alert" class="mb-4 border border-[var(--warning)] bg-[var(--warning)]/10 p-4 text-[var(--warning)]">部分数据加载失败，已展示其余可用内容。</p>
+
+      <div v-if="allEmpty" class="mt-2 border border-[var(--color-border)] p-10 text-center">
+        <h3 class="font-semibold">还没有学习数据</h3>
+        <p class="mt-2 text-[var(--color-text-muted)]">先去刷一道题，开启你的学习记录。</p>
+        <RouterLink class="mt-4 inline-block text-[var(--color-accent)] underline" to="/categories">开始刷题</RouterLink>
+      </div>
+
+      <template v-else>
+        <div class="mb-3.5 grid shrink-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
+          <StatCard label="总题数 · 进度" :hero="true" tone="blue" class="sm:col-span-2 lg:col-span-1">
+            <template #icon>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3"><path d="M22 10v6M2 10l6 6M2 4l6 6M22 4l-6 6"/><path d="M6 22h12"/><path d="M12 22V10"/></svg>
+            </template>
+            <ProgressRing :percent="store.averageProgress" />
+            <div class="flex min-w-0 flex-col gap-0.5">
+              <span class="font-mono text-[35px] font-bold leading-none tracking-tight text-[var(--color-text)]">{{ store.totalProblems }}</span>
+              <div class="flex items-center gap-4 text-base text-[var(--color-text-secondary)]">
+                <span>已完成 <b class="font-mono font-semibold text-[var(--color-text)]">{{ store.completedProblems }}</b></span>
+                <span>正确率 <b class="font-mono font-semibold text-[var(--color-text)]">{{ store.accuracy }}%</b></span>
+              </div>
+            </div>
+          </StatCard>
+
+          <StatCard label="正确率" tone="amber">
+            <template #icon>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            </template>
+            <span class="mt-1 font-mono text-[27px] font-bold tracking-tight text-[var(--color-text)]">{{ store.accuracy }}%</span>
+            <p class="mt-0.5 text-[15px] text-[var(--color-text-muted)]">基于错题占比估算</p>
+          </StatCard>
+
+          <StatCard label="今日刷题" tone="slate">
+            <template #icon>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </template>
+            <span class="mt-1 font-mono text-[27px] font-bold tracking-tight text-[var(--color-text)]">{{ store.todayCount }}</span>
+            <p class="mt-0.5 text-[15px] text-[var(--color-text-muted)]">今日练习次数</p>
+          </StatCard>
+
+          <StatCard label="连续打卡" tone="green">
+            <template #icon>
+              <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+            </template>
+            <span class="mt-1 font-mono text-[27px] font-bold tracking-tight text-[var(--color-text)]">{{ store.streakDays }}</span>
+            <p class="mt-0.5 text-[15px] text-[var(--color-text-muted)]">连续天数</p>
+          </StatCard>
+        </div>
+
+        <div class="mb-3.5 grid shrink-0 grid-cols-1 gap-2 lg:grid-cols-[0.9fr_1.1fr]">
+          <div class="rounded-[3px] border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5">
+            <div class="mb-2.5 flex items-center gap-2">
+              <h2 class="text-[17px] font-semibold text-[var(--color-text)] [font-family:var(--font-heading)]">分类掌握度</h2>
+              <RouterLink to="/categories" class="ml-auto text-[15px] font-medium text-[var(--color-accent)] hover:text-[var(--color-accent-hover)]">详情 →</RouterLink>
+            </div>
+            <div v-if="store.categories.data.length">
+              <div v-for="item in store.categoryMastery" :key="item.id" class="mb-2 last:mb-0">
+                <MasteryBar :id="item.id" :name="item.name" :percent="item.percent" />
+              </div>
+            </div>
+            <p v-else class="py-4 text-center text-[var(--color-text-muted)]">还没有分类数据</p>
+          </div>
+
+          <div class="rounded-[3px] border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5">
+            <div class="mb-2.5 flex items-center gap-2">
+              <h2 class="text-[17px] font-semibold text-[var(--color-text)] [font-family:var(--font-heading)]">最近掌握的知识点</h2>
+              <RouterLink to="/progress" class="ml-auto text-[15px] font-medium text-[var(--color-accent)] hover:text-[var(--color-accent-hover)]">全部 →</RouterLink>
+            </div>
+            <RecentActivity :items="store.recentMastered" />
+          </div>
+        </div>
+
+        <div class="grid flex-1 grid-cols-1 gap-2 lg:grid-cols-[1.3fr_0.7fr]">
+          <div class="flex min-h-0 flex-col gap-2">
+            <div class="shrink-0 rounded-[3px] border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5">
+              <h2 class="mb-2.5 text-[17px] font-semibold text-[var(--color-text)] [font-family:var(--font-heading)]">活动热力图</h2>
+              <Heatmap :days="store.heatmapData" />
+            </div>
+            <div class="flex-1 rounded-[3px] border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5">
+              <TodoSummary />
+            </div>
+          </div>
+          <div class="rounded-[3px] border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5">
+            <h2 class="mb-1 text-[17px] font-semibold text-[var(--color-text)] [font-family:var(--font-heading)]">下一步建议</h2>
+            <Suggestions />
+          </div>
+        </div>
+      </template>
+    </template>
+  </section>
+</template>

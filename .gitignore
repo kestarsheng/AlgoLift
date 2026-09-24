@@ -48,3 +48,8 @@ prisma/*.db-journal
 *.tsbuildinfo
 frontend/src/**/*.js
 frontend/vite.config.js
+
+# Prototypes (temporary, not part of the real app)
+prototype/
+# Local tool configuration
+.arts/
