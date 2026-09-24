@@ -17,6 +17,14 @@
 | `--color-accent-light` | 标签背景、hover | `#e8effa` |
 | `--color-accent-hover` | 强调色悬停态 | `#4a6dc4` |
 | `--color-border` | 分隔线、卡片边框 | `#dfe5ef` |
+| `--success` | 成功状态（一遍过、已完成、稳定） | `#5aad84` |
+| `--warning` | 警告状态（进行中、待复习） | `#c4a25a` |
+| `--danger` | 危险/错误状态（逾期、失败、优先） | `#c46a6a` |
+| `--heat-0` | 热力图空单元格 | `#edf2f9` |
+| `--heat-1` | 热力图 1 级（少量） | `#d5e0f2` |
+| `--heat-2` | 热力图 2 级 | `#adc2e6` |
+| `--heat-3` | 热力图 3 级 | `#7b9dd6` |
+| `--heat-4` | 热力图 4 级（最多） | `#4a6dc4` |
 
 ### 八种主题色板
 
@@ -32,6 +40,36 @@
 | pink（粉） | `#f7f2f5` | `#2c1c24` | `#db5e93` | `#f8eaf1` | `#e5dbe0` |
 | black（黑） | `#0b0c11` | `#e4e5ea` | `#40bfb8` | `#1a2e2e` | `#252832` |
 | sky（天蓝） | `#f0f7fb` | `#16222a` | `#50b0d9` | `#e6f2f8` | `#dee7ed` |
+
+### 状态色（按主题）
+
+状态色在大多数浅色主题下一致（success `#5aad84`、warning `#c4a25a`、danger `#c46a6a`）；warm/pink 使用偏暖的状态色，slate 的 success 略调为 `#5dad84`。
+
+| 主题 | `--success` | `--warning` | `--danger` |
+|---|---|---|---|
+| dawn | `#5aad84` | `#c4a25a` | `#c46a6a` |
+| warm | `#8fb893` | `#c9a85e` | `#c96e6e` |
+| mint | `#5aad84` | `#c4a25a` | `#c46a6a` |
+| slate | `#5dad84` | `#c4a25a` | `#c46a6a` |
+| orange | `#5aad84` | `#c4a25a` | `#c46a6a` |
+| pink | `#8fb893` | `#c9a85e` | `#c96e6e` |
+| black | `#5aad84` | `#c4a25a` | `#c46a6a` |
+| sky | `#5aad84` | `#c4a25a` | `#c46a6a` |
+
+### 热力图色阶（按主题）
+
+5 级色阶随主题 accent 变化，每个主题独立；`--heat-0` 为空单元格底色，`--heat-4` 为最活跃色（通常对应该主题的 `--color-accent-hover`）。
+
+| 主题 | `--heat-0` | `--heat-1` | `--heat-2` | `--heat-3` | `--heat-4` |
+|---|---|---|---|---|---|
+| dawn | `#edf2f9` | `#d5e0f2` | `#adc2e6` | `#7b9dd6` | `#4a6dc4` |
+| warm | `#f0ebe6` | `#e2d2c5` | `#d0b29c` | `#c48d6b` | `#c06a3f` |
+| mint | `#e9f4ee` | `#cde8d8` | `#a0d6b4` | `#68c492` | `#3cb07a` |
+| slate | `#ececf5` | `#d3d4ec` | `#aeb1de` | `#8087ce` | `#535abb` |
+| orange | `#f1ebe4` | `#e5d3c0` | `#d7b594` | `#ce925e` | `#ce782e` |
+| pink | `#f0e9ed` | `#e3ced9` | `#d5a9be` | `#cf7da1` | `#cc487d` |
+| black | `#181b22` | `#1b2a2e` | `#234747` | `#2e6e6b` | `#40bfb8` |
+| sky | `#e9f1f6` | `#cae1ef` | `#9cc9e3` | `#69acd3` | `#3b9ec7` |
 
 ## 字体与字号
 

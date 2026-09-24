@@ -1,15 +1,27 @@
+// 数据概览聚合 store：并行加载分类/题目/错题/笔记/待办/进度/统计，并派生掌握度与热力图。
 import { defineStore } from 'pinia';
 import { api } from '../api';
 import type { Category, DashboardStats, NoteListItem, Pagination, Progress, ProblemListItem, Todo, WrongListItem } from '../types';
+
 interface Page<T> { data: T[]; pagination: Pagination }
 interface Module<T> { data: T; error: string }
 const empty = <T>(): Page<T> => ({ data: [], pagination: { page: 1, pageSize: 1, total: 0, totalPages: 0 } });
 const message = (error: unknown, fallback: string): string => error instanceof Error ? error.message : fallback;
 const HEATMAP_DAYS = 119;
+
 export interface HeatmapDay { date: string; count: number; level: number }
+export interface MasteryItem { id: string; name: string; percent: number }
+export interface KnowledgeItem { id: string; title: string; percent: number; description: string }
+
+const todayUtc = (): string => new Date().toISOString().slice(0, 10);
+
 export const useDashboardStore = defineStore('dashboard', {
   state: () => ({ loading: false, categories: { data: [] as Category[], error: '' } as Module<Category[]>, problems: { data: empty<ProblemListItem>(), error: '' } as Module<Page<ProblemListItem>>, wrongs: { data: empty<WrongListItem>(), error: '' } as Module<Page<WrongListItem>>, notes: { data: empty<NoteListItem>(), error: '' } as Module<Page<NoteListItem>>, todos: { data: empty<Todo>(), error: '' } as Module<Page<Todo>>, incompleteTodos: { data: empty<Todo>(), error: '' } as Module<Page<Todo>>, overdueTodos: { data: empty<Todo>(), error: '' } as Module<Page<Todo>>, progress: { data: empty<Progress>(), error: '' } as Module<Page<Progress>>, stats: { data: { difficultyCounts: { EASY: 0, MEDIUM: 0, HARD: 0 }, dailyPractice: [] } as DashboardStats, error: '' } as Module<DashboardStats>, statsLoading: false }),
-  getters: { averageProgress: (state): number => state.progress.data.data.length ? Math.round(state.progress.data.data.reduce((sum, item) => sum + item.progress, 0) / state.progress.data.data.length) : 0, latestProgress: (state): Progress | null => state.progress.data.data[0] ?? null, hasErrors: (state): boolean => [state.categories, state.problems, state.wrongs, state.notes, state.todos, state.incompleteTodos, state.overdueTodos, state.progress, state.stats].some((item) => Boolean(item.error)), heatmapDays: (state): HeatmapDay[] => {
+  getters: {
+    averageProgress: (state): number => state.progress.data.data.length ? Math.round(state.progress.data.data.reduce((sum, item) => sum + item.progress, 0) / state.progress.data.data.length) : 0,
+    latestProgress: (state): Progress | null => state.progress.data.data[0] ?? null,
+    hasErrors: (state): boolean => [state.categories, state.problems, state.wrongs, state.notes, state.todos, state.incompleteTodos, state.overdueTodos, state.progress, state.stats].some((item) => Boolean(item.error)),
+    heatmapDays: (state): HeatmapDay[] => {
       const counts = new Map(state.stats.data.dailyPractice.map((item) => [item.date, item.count]));
       const end = new Date(); end.setUTCHours(0, 0, 0, 0);
       const start = new Date(end); start.setUTCDate(start.getUTCDate() - (HEATMAP_DAYS - 1));
@@ -18,7 +30,46 @@ export const useDashboardStore = defineStore('dashboard', {
       for (let index = 0; index < pad; index++) days.push({ date: '', count: 0, level: -1 });
       for (let index = 0; index < HEATMAP_DAYS; index++) { const day = new Date(start); day.setUTCDate(start.getUTCDate() + index); const date = day.toISOString().slice(0, 10); const count = counts.get(date) ?? 0; days.push({ date, count, level: count === 0 ? 0 : count <= 2 ? 1 : count <= 4 ? 2 : count <= 6 ? 3 : 4 }); }
       return days;
-    } },
+    },
+    heatmapData: (state): HeatmapDay[] => {
+      const counts = new Map(state.stats.data.dailyPractice.map((item) => [item.date, item.count]));
+      const end = new Date(); end.setUTCHours(0, 0, 0, 0);
+      const start = new Date(end); start.setUTCDate(start.getUTCDate() - (HEATMAP_DAYS - 1));
+      const pad = (start.getUTCDay() + 6) % 7;
+      const days: HeatmapDay[] = [];
+      for (let index = 0; index < pad; index++) days.push({ date: '', count: 0, level: -1 });
+      for (let index = 0; index < HEATMAP_DAYS; index++) { const day = new Date(start); day.setUTCDate(start.getUTCDate() + index); const date = day.toISOString().slice(0, 10); const count = counts.get(date) ?? 0; days.push({ date, count, level: count === 0 ? 0 : count <= 2 ? 1 : count <= 4 ? 2 : count <= 6 ? 3 : 4 }); }
+      return days;
+    },
+    totalProblems: (state): number => state.stats.data.difficultyCounts.EASY + state.stats.data.difficultyCounts.MEDIUM + state.stats.data.difficultyCounts.HARD,
+    // TODO: 后端 /stats/dashboard 未返回已完成题数，暂以累计练习次数近似。
+    completedProblems: (state): number => state.stats.data.dailyPractice.reduce((sum, item) => sum + item.count, 0),
+    // TODO: 后端 /stats/dashboard 未返回正确率，暂以 1 - 错题占比近似，接入真实字段后替换。
+    accuracy: (state): number => {
+      const total = state.stats.data.difficultyCounts.EASY + state.stats.data.difficultyCounts.MEDIUM + state.stats.data.difficultyCounts.HARD;
+      const wrong = state.wrongs.data.pagination.total;
+      return total === 0 ? 0 : Math.round(100 * Math.max(0, 1 - wrong / total));
+    },
+    todayCount: (state): number => {
+      const today = todayUtc();
+      return state.stats.data.dailyPractice.find((item) => item.date === today)?.count ?? 0;
+    },
+    streakDays: (state): number => {
+      const counts = new Set(state.stats.data.dailyPractice.filter((item) => item.count > 0).map((item) => item.date));
+      let streak = 0;
+      const cursor = new Date(); cursor.setUTCHours(0, 0, 0, 0);
+      while (counts.has(cursor.toISOString().slice(0, 10))) { streak += 1; cursor.setUTCDate(cursor.getUTCDate() - 1); }
+      return streak;
+    },
+    categoryMastery: (state): MasteryItem[] => {
+      const progressMap = new Map(state.progress.data.data.map((item) => [item.title, item.progress]));
+      return state.categories.data
+        .map((category) => ({ id: category.id, name: category.name, percent: progressMap.get(category.name) ?? 0 }))
+        .sort((a, b) => b.percent - a.percent || a.name.localeCompare(b.name))
+        .slice(0, 6);
+    },
+    recentMastered: (state): KnowledgeItem[] => state.progress.data.data.slice(0, 4).map((item) => ({ id: item.id, title: item.title, percent: item.progress, description: item.description ?? '' })),
+  },
   actions: {
     async fetch(): Promise<void> {
       this.loading = true; const page = { page: 1, pageSize: 10 }; const run = async <T>(request: Promise<{ data: T }>, target: Module<T>, fallback: string): Promise<void> => { try { target.data = (await request).data; target.error = ''; } catch (error: unknown) { target.error = message(error, fallback); } };
