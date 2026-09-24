@@ -37,7 +37,7 @@ const userInitial = computed(() => (auth.user?.displayName || auth.user?.email |
 </script>
 <template>
   <div v-if="auth.isAuthenticated" class="min-h-screen lg:grid lg:grid-cols-[232px_1fr]">
-    <aside class="border-b border-[var(--color-border)] bg-[var(--color-surface)] lg:sticky lg:top-0 lg:min-h-screen lg:border-b-0 lg:border-r">
+    <aside class="flex flex-col border-b border-[var(--color-border)] bg-[var(--color-surface)] lg:sticky lg:top-0 lg:min-h-screen lg:border-b-0 lg:border-r">
       <div class="flex items-center gap-2.5 border-b border-[var(--color-border)] px-[18px] py-4">
         <div class="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[3px] bg-[var(--color-accent)]">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-white"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
@@ -47,7 +47,7 @@ const userInitial = computed(() => (auth.user?.displayName || auth.user?.email |
           <div class="text-xs font-medium uppercase tracking-[0.04em] text-[var(--color-text-muted)]">算法学习工作台</div>
         </div>
       </div>
-      <nav class="flex gap-2 overflow-x-auto p-2.5 lg:block lg:overflow-visible" aria-label="主导航">
+      <nav class="flex gap-2 overflow-x-auto p-2.5 lg:block lg:flex-1 lg:overflow-y-auto lg:overflow-x-visible" aria-label="主导航">
         <div class="hidden pt-[5px] pb-[3px] px-2 text-[13px] font-semibold uppercase tracking-[0.06em] text-[var(--color-text-muted)] lg:block">导航</div>
         <RouterLink v-for="item in navigation" :key="item.path" :to="item.path" :aria-current="activePath === item.path ? 'page' : undefined" class="flex shrink-0 items-center gap-[9px] rounded-[3px] px-[9px] py-[7px] text-base font-medium transition-colors lg:mb-px lg:shrink" :class="activePath === item.path ? 'bg-[var(--color-accent-light)] font-semibold text-[var(--color-accent)]' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-hover)] hover:text-[var(--color-text)]'">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0" v-html="item.icon" />

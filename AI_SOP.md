@@ -148,6 +148,22 @@ AI 必须自己完成以下全部操作，不需要用户手动执行任何 Git 
 
 **如果 `gh pr merge` 被 Rulesets 阻挡**：停下来告知用户，不要用 `--admin`。
 
+### 1.9.1 生产发布（人工拍板）
+
+AI 完成功能开发后，按 1.9 节合并到 `develop`，**然后停下来**。
+
+**不要自动合并到 `main`。**
+
+合并到 `main` 必须由用户明确指令触发。用户说“发布”或“合并到 main”时，AI 才执行：
+
+1. `gh pr create --base main --head develop --title "release: <描述>" --body "<描述>"`
+2. `gh pr checks --watch`
+3. `gh pr merge --merge`（不加 `--delete-branch`）
+4. `git checkout main && git pull origin main`
+5. `git tag -a v0.1.x -m "<描述>" && git push origin v0.1.x`
+6. `git checkout develop`
+7. 报告：PR 链接、tag、Vercel 部署状态。
+
 ### 1.10 GitHub 操作规范（AI 全自动）
 
 AI 使用 `gh` CLI 完成以下操作，不需要用户手动：
