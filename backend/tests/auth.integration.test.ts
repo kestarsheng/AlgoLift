@@ -24,6 +24,12 @@ describe('POST /api/auth/register', () => {
     expect(response.body.token).toEqual(expect.any(String));
   });
 
+  it('registers with a display name', async () => {
+    const response = await request(app).post('/api/auth/register').send({ ...registerPayload, email: 'auth-test-display@example.com', displayName: 'Kestar' });
+    expect(response.status).toBe(201);
+    expect(response.body.user.displayName).toBe('Kestar');
+  });
+
   it('rejects an existing email', async () => {
     await request(app).post('/api/auth/register').send(registerPayload);
     const response = await request(app).post('/api/auth/register').send(registerPayload);
