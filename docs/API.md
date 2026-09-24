@@ -154,7 +154,7 @@ Todo 响应包含 `isOverdue`：截止日期早于当天且状态不是 `COMPLET
 
 前端学习进度页面入口为 `/progress`，提供按主题/描述关键词搜索、分页、进度条展示，以及新增、编辑和删除操作；表单提交期间按钮会禁用，删除前需要确认。
 
-Dashboard 数据概览入口为 `/dashboard`（根路径 `/` 默认重定向），由前端并行组合现有分类、题目、错题、笔记、待办和进度接口的分页总数与列表数据；待办总数、未完成数和逾期数分别使用对应筛选查询。难度分布柱状图与 119 天刷题热力图使用 `GET /api/stats/dashboard` 聚合数据，热力图缺省日期由前端补零、按周一对齐分列。各模块独立记录错误，单个接口失败时页面仍展示其余模块并提示部分失败；全部数据为空时展示引导空状态。
+Dashboard 数据概览入口为 `/dashboard`（根路径 `/` 默认重定向），由前端并行组合现有分类、题目、错题、笔记、待办和进度接口的分页总数与列表数据；待办总数、未完成数和逾期数分别使用对应筛选查询。难度分布柱状图与 119 天刷题热力图使用 `GET /api/stats/dashboard` 聚合数据，热力图缺省日期由前端补零、按周日对齐分列。各模块独立记录错误，单个接口失败时页面仍展示其余模块并提示部分失败；全部数据为空时展示引导空状态。
 
 ## Wrong 错题
 
@@ -190,6 +190,6 @@ Dashboard 数据概览入口为 `/dashboard`（根路径 `/` 默认重定向）�
 
 | 方法 | 路径 | 请求参数/请求体 | 成功响应 | 错误 |
 |---|---|---|---|---|
-| GET | `/api/stats/dashboard` | Query：`days` 可选（统计窗口天数，1–365，默认 119） | `200`：`{ "difficultyCounts": { "EASY": 0, "MEDIUM": 0, "HARD": 0 }, "dailyPractice": [{ "date": "YYYY-MM-DD", "count": 2 }] }` | `401 UNAUTHORIZED` |
+| GET | `/api/stats/dashboard` | Query：`days` 可选（统计窗口天数，1–365，默认 119） | `200`：`{ "difficultyCounts": { "EASY": 0, "MEDIUM": 0, "HARD": 0 }, "dailyPractice": [{ "date": "YYYY-MM-DD", "count": 2 }], "totalProblems": 0, "completedProblems": 0, "accuracy": 0 }` | `401 UNAUTHORIZED` |
 
-`difficultyCounts` 为当前用户全部题目按难度计数；`dailyPractice` 为统计窗口内每天的练习记录条数，仅返回有记录的日期，缺省日期由前端补零；日期由练习记录的 `practicedAt`（UTC 午夜）转换而来。
+`difficultyCounts` 为当前用户全部题目按难度计数；`dailyPractice` 为统计窗口内每天的练习记录条数，仅返回有记录的日期，缺省日期由前端补零；日期由练习记录的 `practicedAt`（UTC 午夜）转换而来。`totalProblems` 为当前用户全部题目总数；`completedProblems` 为有练习记录的去重题目数；`accuracy` 为一遍做对率（`solvedFirstTry` 为 true 的练习数 / 总练习数 × 100，四舍五入，无练习记录时为 0）。
