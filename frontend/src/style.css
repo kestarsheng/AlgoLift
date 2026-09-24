@@ -1,5 +1,20 @@
-/* Theme variables and Tailwind-compatible utility baseline. */
+/* 全局主题变量与设计 token 基线：8 种主题只改变颜色，不改变布局/字体/圆角/边框。 */
 @import 'tailwindcss';
-:root { --color-bg: #F5F8FA; --color-text: #26313A; --color-accent: #3E6B8C; --color-accent-light: #DDE8F0; --color-border: #C8D6E0; }
-* { box-sizing: border-box; }
-body { margin: 0; min-width: 375px; background: var(--color-bg); color: var(--color-text); font-family: system-ui, sans-serif; }
+@config "../tailwind.config.js";
+
+:root {
+  --font-heading: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+:root,[data-theme="dawn"]{--color-bg:#f2f6fd;--color-surface:#fff;--color-surface-topbar:rgba(242,246,253,.88);--color-hover:#e8eef8;--color-text:#121826;--color-text-secondary:#4d5b73;--color-text-muted:#8695ae;--color-accent:#5f82db;--color-accent-light:#e8effa;--color-accent-hover:#4a6dc4;--color-border:#dfe5ef;--success:#5aad84;--warning:#c4a25a;--danger:#c46a6a;--heat-0:#edf2f9;--heat-1:#d5e0f2;--heat-2:#adc2e6;--heat-3:#7b9dd6;--heat-4:#4a6dc4}
+[data-theme="warm"]{--color-bg:#f8f4f0;--color-surface:#fff;--color-surface-topbar:rgba(248,244,240,.88);--color-hover:#efe9e2;--color-text:#2c221e;--color-text-secondary:#7a6b5f;--color-text-muted:#a69789;--color-accent:#d48054;--color-accent-light:#f6ede7;--color-accent-hover:#c06a3f;--color-border:#e6ddd5;--success:#8fb893;--warning:#c9a85e;--danger:#c96e6e;--heat-0:#f0ebe6;--heat-1:#e2d2c5;--heat-2:#d0b29c;--heat-3:#c48d6b;--heat-4:#c06a3f}
+[data-theme="mint"]{--color-bg:#f0f9f4;--color-surface:#fff;--color-surface-topbar:rgba(240,249,244,.88);--color-hover:#e3f2ea;--color-text:#1a2d22;--color-text-secondary:#567a66;--color-text-muted:#88a898;--color-accent:#52c48c;--color-accent-light:#e8f7ef;--color-accent-hover:#3cb07a;--color-border:#e2ece5;--success:#5aad84;--warning:#c4a25a;--danger:#c46a6a;--heat-0:#e9f4ee;--heat-1:#cde8d8;--heat-2:#a0d6b4;--heat-3:#68c492;--heat-4:#3cb07a}
+[data-theme="slate"]{--color-bg:#f2f2f9;--color-surface:#fff;--color-surface-topbar:rgba(242,242,249,.88);--color-hover:#e8e8f3;--color-text:#1e2230;--color-text-secondary:#5c647a;--color-text-muted:#8e95ae;--color-accent:#6870cc;--color-accent-light:#ededf7;--color-accent-hover:#535abb;--color-border:#e2e3ed;--success:#5dad84;--warning:#c4a25a;--danger:#c46a6a;--heat-0:#ececf5;--heat-1:#d3d4ec;--heat-2:#aeb1de;--heat-3:#8087ce;--heat-4:#535abb}
+[data-theme="orange"]{--color-bg:#f8f5f1;--color-surface:#fff;--color-surface-topbar:rgba(248,245,241,.88);--color-hover:#efe9e1;--color-text:#2c211a;--color-text-secondary:#7a695a;--color-text-muted:#a69586;--color-accent:#e28a3d;--color-accent-light:#f8efe6;--color-accent-hover:#ce782e;--color-border:#e6ddd4;--success:#5aad84;--warning:#c4a25a;--danger:#c46a6a;--heat-0:#f1ebe4;--heat-1:#e5d3c0;--heat-2:#d7b594;--heat-3:#ce925e;--heat-4:#ce782e}
+[data-theme="pink"]{--color-bg:#f7f2f5;--color-surface:#fff;--color-surface-topbar:rgba(247,242,245,.88);--color-hover:#ede6ec;--color-text:#2c1c24;--color-text-secondary:#7a5b68;--color-text-muted:#a68896;--color-accent:#db5e93;--color-accent-light:#f8eaf1;--color-accent-hover:#cc487d;--color-border:#e5dbe0;--success:#8fb893;--warning:#c9a85e;--danger:#c96e6e;--heat-0:#f0e9ed;--heat-1:#e3ced9;--heat-2:#d5a9be;--heat-3:#cf7da1;--heat-4:#cc487d}
+[data-theme="black"]{--color-bg:#0b0c11;--color-surface:#15171e;--color-surface-topbar:rgba(11,12,17,.92);--color-hover:#1d202a;--color-text:#e4e5ea;--color-text-secondary:#969aa8;--color-text-muted:#606476;--color-accent:#40bfb8;--color-accent-light:#1a2e2e;--color-accent-hover:#5ccec8;--color-border:#252832;--success:#5aad84;--warning:#c4a25a;--danger:#c46a6a;--heat-0:#181b22;--heat-1:#1b2a2e;--heat-2:#234747;--heat-3:#2e6e6b;--heat-4:#40bfb8}
+[data-theme="sky"]{--color-bg:#f0f7fb;--color-surface:#fff;--color-surface-topbar:rgba(240,247,251,.88);--color-hover:#e4f0f7;--color-text:#16222a;--color-text-secondary:#4d6a7a;--color-text-muted:#7a9aaa;--color-accent:#50b0d9;--color-accent-light:#e6f2f8;--color-accent-hover:#3b9ec7;--color-border:#dee7ed;--success:#5aad84;--warning:#c4a25a;--danger:#c46a6a;--heat-0:#e9f1f6;--heat-1:#cae1ef;--heat-2:#9cc9e3;--heat-3:#69acd3;--heat-4:#3b9ec7}
+
+*{box-sizing:border-box}body{margin:0;min-width:375px;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);font-variant-numeric:tabular-nums;transition:background .2s,color .2s;min-height:100vh}h1,h2,h3,h4{font-family:var(--font-heading)}
