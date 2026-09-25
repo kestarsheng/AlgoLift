@@ -6,7 +6,7 @@ interface WrongListResponse { data: WrongListItem[]; pagination: Pagination }
 interface WrongDataResponse { data: Wrong }
 export interface WrongInputPayload { title: string; difficulty: Difficulty; category?: string; review?: string; solutionLinks?: { name: string; url: string }[] }
 export const useWrongListStore = defineStore('wrongList', {
-  state: () => ({ items: [] as WrongListItem[], pagination: { page: 1, pageSize: 10, total: 0, totalPages: 0 } as Pagination, keyword: '', category: '', difficulty: '' as Difficulty | '', loading: false, error: '', saving: false, deleting: false, saveError: '', deleteError: '' }),
+  state: () => ({ items: [] as WrongListItem[], pagination: { page: 1, pageSize: 9, total: 0, totalPages: 0 } as Pagination, keyword: '', category: '', difficulty: '' as Difficulty | '', loading: false, error: '', saving: false, deleting: false, saveError: '', deleteError: '' }),
   actions: {
     message(error: unknown, fallback: string): string { return error instanceof Error ? error.message : fallback; },
     async fetch(): Promise<void> { this.loading = true; this.error = ''; try { const response = await api.get<WrongListResponse>('/wrongs', { params: { page: this.pagination.page, pageSize: this.pagination.pageSize, keyword: this.keyword || undefined, category: this.category || undefined, difficulty: this.difficulty || undefined } }); this.items = response.data.data; this.pagination = response.data.pagination; } catch (error: unknown) { this.error = this.message(error, '错题列表加载失败'); } finally { this.loading = false; } },

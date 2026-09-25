@@ -5,7 +5,7 @@ interface ProgressPage { data: Progress[]; pagination: Pagination }
 interface ProgressResponse { data: Progress }
 export interface ProgressInput { title: string; progress: number; progressDate: string; description?: string }
 export const useProgressStore = defineStore('progress', {
-  state: () => ({ items: [] as Progress[], pagination: { page: 1, pageSize: 10, total: 0, totalPages: 0 } as Pagination, keyword: '', loading: false, saving: false, deleting: false, listError: '', saveError: '', deleteError: '' }),
+  state: () => ({ items: [] as Progress[], pagination: { page: 1, pageSize: 9, total: 0, totalPages: 0 } as Pagination, keyword: '', loading: false, saving: false, deleting: false, listError: '', saveError: '', deleteError: '' }),
   actions: {
     message(error: unknown, fallback: string): string { return error instanceof Error ? error.message : fallback; },
     async fetch(): Promise<void> { this.loading = true; this.listError = ''; try { const response = await api.get<ProgressPage>('/progresses', { params: { page: this.pagination.page, pageSize: this.pagination.pageSize, keyword: this.keyword || undefined } }); this.items = response.data.data; this.pagination = response.data.pagination; } catch (error: unknown) { this.listError = this.message(error, '进度加载失败'); } finally { this.loading = false; } },
