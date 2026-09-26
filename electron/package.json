@@ -1,0 +1,63 @@
+{
+  "name": "algolift-electron",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AlgoLift desktop application (Electron shell)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "node scripts/build.js",
+    "rebuild": "node -e \"require('@electron/rebuild').rebuild({buildPath:'../backend',electronVersion:require('./package.json').devDependencies.electron,arch:process.arch,force:true,onlyModules:['bcrypt']})\""
+  },
+  "devDependencies": {
+    "@electron/rebuild": "4.2.0",
+    "electron": "44.4.5",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "com.algolift.desktop",
+    "productName": "AlgoLift",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js"
+    ],
+    "extraResources": [
+      {
+        "from": "../frontend/dist",
+        "to": "frontend/dist"
+      },
+      {
+        "from": "../backend/dist",
+        "to": "backend/dist"
+      },
+      {
+        "from": "../backend/node_modules",
+        "to": "backend/node_modules"
+      },
+      {
+        "from": "../backend/prisma",
+        "to": "backend/prisma"
+      },
+      {
+        "from": "../backend/package.json",
+        "to": "backend/package.json"
+      },
+      {
+        "from": "../backend/.env",
+        "to": "backend/.env"
+      }
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
