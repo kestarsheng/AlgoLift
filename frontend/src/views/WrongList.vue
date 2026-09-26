@@ -7,6 +7,7 @@ import PaginationNav from '../components/PaginationNav.vue';
 import StateBox from '../components/StateBox.vue';
 import Modal from '../components/Modal.vue';
 import { WRONG_CATEGORY_PRESETS } from '../constants';
+import { formatDate } from '../utils/date';
 import type { Difficulty, WrongListItem } from '../types';
 
 const store = useWrongListStore();
@@ -43,7 +44,7 @@ function relativeTime(iso: string | undefined): string {
   if (days === 1) return '昨天';
   if (days < 7) return `${days} 天前`;
   if (days < 30) return `${Math.floor(days / 7)} 周前`;
-  return `${then.getFullYear()}-${String(then.getMonth() + 1).padStart(2, '0')}-${String(then.getDate()).padStart(2, '0')}`;
+  return formatDate(iso);
 }
 
 const formOpen = ref(false);
