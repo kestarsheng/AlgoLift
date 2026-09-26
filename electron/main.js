@@ -347,10 +347,69 @@ app.whenReady().then(async () => {
   const paths = getPaths();
   console.log('[electron] paths resolved:', JSON.stringify(paths, null, 2));
 
-  // 注册 app:// 协议 handler：把请求映射到 frontend/dist，找不到的路径回退到 index.html（SPA）。
-  protocol.handle('app', (request) => {
+  // 注册 app:// 协议 handler：/api/ 与 /uploads/ 代理到本地后端，其余映射到 frontend/dist（SPA）。
+  // 前端 baseURL 回落到 /api（同源），在 app:// 协议下会请求 app://localhost/api/...，
+  // 不代理的话根本到不了 http://localhost:3000，表现为页面能开但所有接口失败、登录无反应。
+  protocol.handle('app', async (request) => {
     const url = new URL(request.url);
     let pathname = decodeURIComponent(url.pathname);
+
+    // 代理 /api/ 和 /uploads/ 到本地后端（用 Node http 模块，避免 net.fetch 的参数限制）。
+    if (pathname.startsWith('/api/') || pathname.startsWith('/uploads/')) {
+      const backendPath = `${pathname}${url.search}`;
+      const reqHeaders = {};
+      const forbidden = new Set(['host', 'connection', 'content-length', 'transfer-encoding', 'keep-alive']);
+      for (const [k, v] of request.headers.entries()) {
+        if (!forbidden.has(k.toLowerCase())) reqHeaders[k] = v;
+      }
+      return new Promise((resolve) => {
+        const proxyReq = http.request({
+          hostname: 'localhost',
+          port: BACKEND_PORT,
+          path: backendPath,
+          method: request.method,
+          headers: reqHeaders,
+        }, (proxyRes) => {
+          const chunks = [];
+          proxyRes.on('data', (c) => chunks.push(c));
+          proxyRes.on('end', () => {
+            const bodyBuf = Buffer.concat(chunks);
+            const resHeaders = new Headers();
+            for (const [k, v] of Object.entries(proxyRes.headers)) {
+              const lk = k.toLowerCase();
+              if (lk === 'transfer-encoding' || lk === 'connection' || lk === 'keep-alive') continue;
+              if (Array.isArray(v)) v.forEach((x) => resHeaders.append(k, x));
+              else resHeaders.set(k, v);
+            }
+            resolve(new Response(bodyBuf, { status: proxyRes.statusCode, headers: resHeaders }));
+          });
+        });
+        proxyReq.on('error', (e) => {
+          console.error('[electron] proxy failed:', backendPath, e.message);
+          resolve(new Response(JSON.stringify({ message: `backend proxy failed: ${e.message}` }), {
+            status: 502, headers: { 'content-type': 'application/json' },
+          }));
+        });
+        // 转发请求体（Web ReadableStream → Node Writable）。
+        if (request.body) {
+          (async () => {
+            const reader = request.body.getReader();
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              proxyReq.write(Buffer.from(value));
+            }
+            proxyReq.end();
+          })().catch((e) => {
+            console.error('[electron] proxy body pump failed:', e.message);
+            try { proxyReq.destroy(); } catch (_) {}
+          });
+        } else {
+          proxyReq.end();
+        }
+      });
+    }
+
     if (pathname === '/' || pathname === '') pathname = '/index.html';
     const filePath = path.join(paths.frontendDist, pathname);
     if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
@@ -374,6 +433,16 @@ app.whenReady().then(async () => {
   try {
     await waitForBackend(BACKEND_PORT);
     console.log('[electron] backend ready, loading frontend');
+
+    // 代理自检：通过 app:// 协议访问 /api/health，确认 protocol.handle 的代理分支工作。
+    try {
+      const r = await net.fetch('app://localhost/api/health');
+      const t = await r.text();
+      console.log('[electron] proxy self-check app://localhost/api/health ->', r.status, t);
+    } catch (e) {
+      console.error('[electron] proxy self-check FAILED:', e.message);
+    }
+
     loadFrontend();
   } catch (e) {
     console.error('[electron] backend failed to start:', e.message);
