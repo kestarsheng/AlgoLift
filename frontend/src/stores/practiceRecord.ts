@@ -4,6 +4,7 @@ import { api } from '../api';
 import type { Pagination, PracticeRecord } from '../types';
 interface RecordResponse { data: PracticeRecord[]; pagination: Pagination }
 interface RecordInput { practicedAt: string; solvedFirstTry: boolean; remark?: string }
+interface RecordUpdate { practicedAt?: string; solvedFirstTry?: boolean; remark?: string | null }
 export const usePracticeRecordStore = defineStore('practiceRecord', {
   state: () => ({
     problemId: '',
@@ -57,6 +58,20 @@ export const usePracticeRecordStore = defineStore('practiceRecord', {
         await this.fetch(this.problemId, page);
       } catch (error: unknown) {
         this.error = error instanceof Error ? error.message : '练习记录删除失败';
+      }
+    },
+    /** 修改练习记录；成功后刷新当前页。 */
+    async update(recordId: string, input: RecordUpdate): Promise<void> {
+      this.saving = true;
+      this.error = '';
+      try {
+        await api.patch(`/problems/${this.problemId}/practice-records/${recordId}`, input);
+        await this.fetch(this.problemId, this.pagination.page);
+      } catch (error: unknown) {
+        this.error = error instanceof Error ? error.message : '练习记录更新失败';
+        throw error;
+      } finally {
+        this.saving = false;
       }
     },
   },

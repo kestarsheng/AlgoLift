@@ -24,3 +24,4 @@ practiceRecordRouter.post('/problems/:problemId/practice-records', controller.po
  *     responses: { 204: { description: Deleted }, 404: { description: Practice record not found } }
  */
 practiceRecordRouter.delete('/problems/:problemId/practice-records/:recordId', controller.removePracticeRecord);
+practiceRecordRouter.patch('/problems/:problemId/practice-records/:recordId', controller.patchPracticeRecord);
