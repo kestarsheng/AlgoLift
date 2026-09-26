@@ -1,4 +1,4 @@
-// MarkdownRenderer 渲染测试：标题/加粗/代码块/XSS 清洗/Mermaid 不崩溃。
+// MarkdownRenderer 渲染测试：标题/加粗/代码高亮/表格/XSS 清洗/Mermaid 不崩溃。
 import { describe, expect, it } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import MarkdownRenderer from '../components/editor/MarkdownRenderer.vue';
@@ -16,10 +16,17 @@ describe('MarkdownRenderer', () => {
     expect(wrapper.html()).toContain('<h1');
     expect(wrapper.html()).toContain('<strong');
   });
-  it('渲染代码块', async () => {
+  it('渲染代码块并应用语法高亮', async () => {
     const wrapper = await render('```js\nconst x = 1;\n```');
     expect(wrapper.html()).toContain('<pre');
     expect(wrapper.html()).toContain('<code');
+    expect(wrapper.html()).toContain('hljs');
+  });
+  it('渲染表格', async () => {
+    const wrapper = await render('| A | B |\n| --- | --- |\n| 1 | 2 |');
+    expect(wrapper.html()).toContain('<table');
+    expect(wrapper.html()).toContain('<th');
+    expect(wrapper.html()).toContain('<td');
   });
   it('清洗 script 标签', async () => {
     const wrapper = await render('正文 <script>alert(1)</script>');
