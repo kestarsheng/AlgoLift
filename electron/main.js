@@ -23,6 +23,22 @@ const { pathToFileURL } = require('url');
   }
 })();
 
+// 单实例锁：若已有实例运行，立即退出当前实例；主实例收到 second-instance 时聚焦已有窗口。
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  console.log('[electron] another instance is already running, quitting this one');
+  app.quit();
+  process.exit(0);
+}
+app.on('second-instance', () => {
+  console.log('[electron] second instance attempted; focusing existing window');
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    if (!mainWindow.isVisible()) mainWindow.show();
+    mainWindow.focus();
+  }
+});
+
 // 注册自定义协议 app://，必须在 app ready 之前调用。
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } },
