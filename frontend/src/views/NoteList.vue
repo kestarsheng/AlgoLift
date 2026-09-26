@@ -8,6 +8,7 @@ import StateBox from '../components/StateBox.vue';
 import Modal from '../components/Modal.vue';
 import { formatDate } from '../utils/date';
 import type { NoteListItem } from '../types';
+import RichTextEditor from '../components/editor/RichTextEditor.vue';
 
 const store = useNoteListStore();
 
@@ -18,7 +19,7 @@ const rangeLabel = computed(() => {
   const to = Math.min(page * pageSize, total);
   return `显示第 ${from}–${to} / 共 ${total} 条`;
 });
-function summary(content: string | null): string { return (content ?? '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, 60); }
+function summary(content: string | null): string { return (content ?? '').replace(/[#*_`>~\[\]\(\)!]/g, '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, 60); }
 function relativeTime(iso: string | undefined): string {
   if (!iso) return '—';
   const then = new Date(iso);
@@ -137,7 +138,7 @@ onMounted(() => { void store.fetch(); });
         </label>
         <label class="block text-[15px] font-medium text-[var(--color-text-secondary)]">
           内容（可选）
-          <textarea v-model="form.content" aria-label="笔记内容" rows="6" class="mt-1 w-full rounded-[3px] border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-[15px] text-[var(--color-text)] focus:border-[var(--color-accent)] focus:outline-none" />
+          <RichTextEditor v-model="form.content" class="mt-1" />
         </label>
         <p v-if="store.saveError" role="alert" class="rounded-[3px] border border-[color-mix(in_srgb,var(--danger)_35%,var(--color-border))] px-3 py-2 text-sm text-[var(--danger)]">{{ store.saveError }}</p>
         <div class="flex justify-end gap-3">

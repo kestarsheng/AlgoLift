@@ -1,7 +1,8 @@
 // 实现题目查询、创建、编辑与删除业务。
 import { Prisma, Difficulty } from '@prisma/client';
 import { prisma } from '../../config/prisma';
-import { cleanHtml, CreateProblemInput, ProblemQuery, UpdateProblemInput } from './problem.dto';
+import { cleanMarkdown } from '../../config/markdown';
+import { CreateProblemInput, ProblemQuery, UpdateProblemInput } from './problem.dto';
 
 export class ProblemError extends Error { public constructor(public readonly code: string, message: string, public readonly statusCode: number) { super(message); } }
 const include = { categories: { include: { category: { select: { id: true, name: true } } } }, _count: { select: { practiceRecords: true, notes: true } }, practiceRecords: { orderBy: { practicedAt: 'desc' as const }, take: 1, select: { practicedAt: true } } } as const;
@@ -19,11 +20,11 @@ export const listProblems = async (userId: string, query: ProblemQuery) => {
 };
 export const getProblem = detail;
 export const createProblem = async (userId: string, input: CreateProblemInput) => {
-  try { const problem = await prisma.$transaction(async (tx) => { const categories = input.categoryIds?.length ? await tx.category.findMany({ where: { userId, id: { in: input.categoryIds } }, select: { id: true } }) : []; if (categories.length !== (input.categoryIds?.length ?? 0)) throw new ProblemError('CATEGORY_ACCESS_DENIED', 'One or more categories are unavailable', 403); return tx.problem.create({ data: { userId, title: input.title.trim(), difficulty: input.difficulty, internalNote: input.internalNote === undefined || input.internalNote === null ? null : cleanHtml(input.internalNote), categories: { create: categories.map(({ id: categoryId }) => ({ categoryId })) } }, include }); }); return { data: summary(problem) }; }
+  try { const problem = await prisma.$transaction(async (tx) => { const categories = input.categoryIds?.length ? await tx.category.findMany({ where: { userId, id: { in: input.categoryIds } }, select: { id: true } }) : []; if (categories.length !== (input.categoryIds?.length ?? 0)) throw new ProblemError('CATEGORY_ACCESS_DENIED', 'One or more categories are unavailable', 403); return tx.problem.create({ data: { userId, title: input.title.trim(), difficulty: input.difficulty, internalNote: input.internalNote === undefined || input.internalNote === null ? null : cleanMarkdown(input.internalNote), categories: { create: categories.map(({ id: categoryId }) => ({ categoryId })) } }, include }); }); return { data: summary(problem) }; }
   catch (error: unknown) { if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') throw new ProblemError('PROBLEM_TITLE_EXISTS', 'Problem title already exists', 409); throw error; }
 };
 export const updateProblem = async (userId: string, problemId: string, input: UpdateProblemInput) => {
-  try { const problem = await prisma.problem.update({ where: { id: problemId, userId }, data: { ...(input.title === undefined ? {} : { title: input.title.trim() }), ...(input.difficulty === undefined ? {} : { difficulty: input.difficulty }), ...(input.internalNote === undefined ? {} : { internalNote: input.internalNote === null ? null : cleanHtml(input.internalNote) }) }, include }); return { data: summary(problem) }; }
+  try { const problem = await prisma.problem.update({ where: { id: problemId, userId }, data: { ...(input.title === undefined ? {} : { title: input.title.trim() }), ...(input.difficulty === undefined ? {} : { difficulty: input.difficulty }), ...(input.internalNote === undefined ? {} : { internalNote: input.internalNote === null ? null : cleanMarkdown(input.internalNote) }) }, include }); return { data: summary(problem) }; }
   catch (error: unknown) { if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') throw new ProblemError('PROBLEM_NOT_FOUND', 'Problem does not exist', 404); if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') throw new ProblemError('PROBLEM_TITLE_EXISTS', 'Problem title already exists', 409); throw error; }
 };
 export const deleteProblem = async (userId: string, problemId: string): Promise<void> => { try { await prisma.problem.delete({ where: { id: problemId, userId } }); } catch (error: unknown) { if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') throw new ProblemError('PROBLEM_NOT_FOUND', 'Problem does not exist', 404); throw error; } };
