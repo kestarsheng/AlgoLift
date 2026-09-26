@@ -5,6 +5,7 @@ import { useProgressStore, type ProgressInput } from '../stores/progress';
 import PaginationNav from '../components/PaginationNav.vue';
 import StateBox from '../components/StateBox.vue';
 import Modal from '../components/Modal.vue';
+import { formatDate } from '../utils/date';
 import type { Progress } from '../types';
 
 const store = useProgressStore();
@@ -95,7 +96,7 @@ onMounted(() => { void store.fetch(); });
           <p v-if="item.description" class="line-clamp-2 min-h-[46px] text-[15px] leading-[1.55] text-[var(--color-text-secondary)]">{{ item.description }}</p>
           <div class="mt-auto flex items-center gap-1 text-[13px] text-[var(--color-text-muted)]">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-[11px] w-[11px]"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            <span class="font-mono tracking-[0.01em]">更新于 {{ item.progressDate }}</span>
+            <span class="font-mono tracking-[0.01em]">更新于 {{ formatDate(item.progressDate) }}</span>
           </div>
         </article>
       </div>
