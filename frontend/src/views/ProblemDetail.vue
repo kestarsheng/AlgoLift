@@ -9,6 +9,8 @@ import PracticeRecordList from '../components/problem/PracticeRecordList.vue';
 import RelatedNotes from '../components/problem/RelatedNotes.vue';
 import { formatDate } from '../utils/date';
 import type { Difficulty } from '../types';
+import RichTextEditor from '../components/editor/RichTextEditor.vue';
+import MarkdownRenderer from '../components/editor/MarkdownRenderer.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -87,7 +89,7 @@ onMounted(load);
               </button>
             </div>
             <p v-if="!problem.problem.internalNote" class="py-4 text-center text-[15px] text-[var(--color-text-muted)]">暂无内部笔记，点击「编辑」补充解题思路。</p>
-            <div v-else class="text-base leading-[1.7] text-[var(--color-text-secondary)] [&_code]:rounded-[2px] [&_code]:bg-[var(--color-hover)] [&_code]:px-[5px] [&_code]:font-mono [&_code]:text-sm [&_h4]:mb-1.5 [&_h4]:mt-4 [&_h4]:text-[17px] [&_h4]:font-semibold [&_h4]:text-[var(--color-text)] [&_li]:mb-1 [&_p]:mb-1.5 [&_strong]:font-semibold [&_strong]:text-[var(--color-text)] [&_ul]:mb-2 [&_ul]:list-disc [&_ul]:pl-5" v-html="problem.problem.internalNote" />
+            <MarkdownRenderer v-else :content="problem.problem.internalNote" />
           </div>
 
           <PracticeRecordList />
@@ -135,7 +137,7 @@ onMounted(load);
           </label>
           <label class="block text-[15px] text-[var(--color-text-secondary)]">
             内部笔记
-            <textarea v-model="form.internalNote" rows="5" aria-label="内部笔记" placeholder="支持 HTML 片段" class="mt-1 w-full rounded-[3px] border border-[var(--color-border)] bg-transparent px-3 py-2 text-[var(--color-text)] outline-none focus:border-[var(--color-accent)]" />
+            <RichTextEditor v-model="form.internalNote" class="mt-1" />
           </label>
           <p v-if="problem.saveError" role="alert" class="text-sm text-[var(--danger)]">{{ problem.saveError }}</p>
           <div class="flex justify-end gap-3">

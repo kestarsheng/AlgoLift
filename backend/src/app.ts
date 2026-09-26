@@ -1,4 +1,5 @@
 // 创建并配置 AlgoLift Express 应用。
+import path from 'path';
 import cors from 'cors';
 import express from 'express';
 import swaggerUi from 'swagger-ui-express';
@@ -18,12 +19,14 @@ import { progressRouter } from './modules/progress/progress.route';
 import { wrongRouter } from './modules/wrong/wrong.route';
 import { wrongNotesRouter } from './modules/wrong-notes/wrong-notes.route';
 import { statsRouter } from './modules/stats/stats.route';
+import { uploadsRouter } from './modules/uploads/uploads.route';
 
 export const app = express();
 
 // 生产环境部署到固定域名后，应改成白名单。
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api', healthRouter);
 app.use('/api', authRouter);
@@ -37,6 +40,7 @@ app.use('/api', progressRouter);
 app.use('/api', wrongRouter);
 app.use('/api', wrongNotesRouter);
 app.use('/api', statsRouter);
+app.use('/api', uploadsRouter);
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
 

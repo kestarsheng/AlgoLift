@@ -13,6 +13,7 @@ build/
 .env
 .env.*
 !.env.example
+!frontend/.env.electron
 
 # Editor
 .vscode/
@@ -41,6 +42,10 @@ prisma/*.db-journal
 # Temp files
 *.tmp
 *.temp
+# Migration backups
+backend/scripts/backup-*.json
+# Uploaded files (runtime, not tracked)
+backend/uploads/
 # Agent session config
 .ohmyagent/
 
