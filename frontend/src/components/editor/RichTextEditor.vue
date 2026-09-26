@@ -1,6 +1,6 @@
 <!-- 富文本编辑器：基于 Tiptap，支持图片上传/粘贴/拖拽、Mermaid 实时预览、表格、代码块语言选择，输出 Markdown。 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { Editor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -35,18 +35,30 @@ const editor = new Editor({
   ],
   content: props.modelValue,
   onUpdate: () => emit('update:modelValue', editor.storage.markdown.getMarkdown()),
-  onTransaction: () => { tick.value++; },
+  onTransaction: () => { tick.value++; updateCodeBlockLabels(); },
   editorProps: {
     handlePaste: (_view, event) => handlePaste(null, event),
     handleDrop: (_view, event, _pos) => handleDrop(null, event, 0),
   },
 });
 
+const updateCodeBlockLabels = (): void => {
+  const root = editor.view.dom as HTMLElement;
+  root.querySelectorAll('pre').forEach((pre) => {
+    const code = pre.querySelector('code');
+    if (!code) return;
+    const langClass = Array.from(code.classList).find((c) => c.startsWith('language-'));
+    const lang = langClass ? langClass.replace('language-', '') : 'plaintext';
+    pre.setAttribute('data-language', lang);
+  });
+};
+
 watch(() => props.modelValue, (value: string) => {
-  if (editor.storage.markdown.getMarkdown() !== value) editor.commands.setContent(value || '', { emitUpdate: false });
+  if (editor.storage.markdown.getMarkdown() !== value) { editor.commands.setContent(value || '', { emitUpdate: false }); void nextTick(() => updateCodeBlockLabels()); }
 });
 
 onBeforeUnmount(() => editor.destroy());
+onMounted(() => { void nextTick(() => updateCodeBlockLabels()); });
 
 const run = (command: () => void): void => command();
 
@@ -198,7 +210,9 @@ const btnActive = 'bg-[var(--color-accent-light)] text-[var(--color-accent)]';
 
 <style scoped>
 .rich-text-editor__content :deep(.ProseMirror) {
-  min-height: 120px;
+  min-height: 300px;
+  max-height: 500px;
+  overflow-y: auto;
   outline: none;
   font-size: 16px;
   line-height: 1.7;
@@ -219,7 +233,8 @@ const btnActive = 'bg-[var(--color-accent-light)] text-[var(--color-accent)]';
 .rich-text-editor__content :deep(ol) { list-style: decimal; padding-left: 1.5em; margin: 0 0 0.6em; }
 .rich-text-editor__content :deep(li) { margin: 0 0 0.2em; }
 .rich-text-editor__content :deep(blockquote) { border-left: 3px solid var(--color-accent); padding-left: 0.9em; margin: 0 0 0.6em; color: var(--color-text-secondary); }
-.rich-text-editor__content :deep(pre) { background: var(--color-hover); border-radius: 3px; padding: 0.75em 1em; margin: 0 0 0.6em; overflow-x: auto; }
+.rich-text-editor__content :deep(pre) { position: relative; background: var(--color-hover); border-radius: 3px; padding: 2em 1em 0.75em; margin: 0 0 0.6em; overflow-x: auto; }
+.rich-text-editor__content :deep(pre[data-language])::before { content: attr(data-language); position: absolute; top: 4px; right: 8px; font-size: 12px; font-family: var(--font-mono, 'JetBrains Mono', monospace); color: var(--color-text-muted); pointer-events: none; text-transform: uppercase; letter-spacing: 0.5px; }
 .rich-text-editor__content :deep(code) { font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 0.9em; }
 .rich-text-editor__content :deep(pre code) { color: var(--color-text); background: none; padding: 0; }
 .rich-text-editor__content :deep(:not(pre) > code) { background: var(--color-hover); border-radius: 2px; padding: 0.1em 0.35em; }
