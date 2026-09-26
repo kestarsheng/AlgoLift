@@ -5,6 +5,7 @@ import { useTodoStore } from '../stores/todo';
 import PaginationNav from '../components/PaginationNav.vue';
 import StateBox from '../components/StateBox.vue';
 import Modal from '../components/Modal.vue';
+import { formatDate } from '../utils/date';
 import type { Todo, TodoPriority, TodoStatus } from '../types';
 
 const store = useTodoStore();
@@ -43,9 +44,9 @@ const rangeLabel = computed(() => {
 function dueParts(todo: Todo): { date: string; label: string; overdue: boolean } {
   if (!todo.dueDate) return { date: '未设置', label: '', overdue: false };
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  const then = new Date(`${todo.dueDate}T00:00:00`);
+  const then = new Date(`${formatDate(todo.dueDate)}T00:00:00`);
   const diff = Math.round((then.getTime() - today.getTime()) / 86400000);
-  const date = todo.dueDate.slice(5);
+  const date = formatDate(todo.dueDate).slice(5);
   if (todo.isOverdue) return { date, label: '已逾期', overdue: true };
   if (diff === 0) return { date, label: '今天', overdue: false };
   if (diff === 1) return { date, label: '明天', overdue: false };

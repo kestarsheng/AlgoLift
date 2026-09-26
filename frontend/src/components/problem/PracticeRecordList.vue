@@ -2,6 +2,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
 import { usePracticeRecordStore } from '../../stores/practiceRecord';
+import { formatDate } from '../../utils/date';
 
 const store = usePracticeRecordStore();
 const open = ref(false);
@@ -55,7 +56,7 @@ const remove = async (recordId: string): Promise<void> => { if (window.confirm('
     <p v-else-if="!store.items.length" class="py-6 text-center text-[15px] text-[var(--color-text-muted)]">还没有练习记录，点击右上角「记一次练习」开始记录。</p>
     <div v-else>
       <div v-for="(record, i) in store.items" :key="record.id" class="grid grid-cols-[auto_auto_1fr] items-center gap-2.5 border-t border-[var(--color-border)] py-[9px] first:border-t-0 sm:grid-cols-[auto_auto_auto_minmax(0,1fr)] sm:gap-2.5">
-        <span class="whitespace-nowrap font-mono text-sm text-[var(--color-text-muted)]">{{ record.practicedAt.slice(0, 10) }}</span>
+        <span class="whitespace-nowrap font-mono text-sm text-[var(--color-text-muted)]">{{ formatDate(record.practicedAt) }}</span>
         <span class="whitespace-nowrap rounded-[2px] bg-[var(--color-hover)] px-1.5 text-[13px] font-semibold leading-5 text-[var(--color-text-secondary)]">第 {{ ordinal(i) }} 次</span>
         <span class="inline-flex items-center gap-1 whitespace-nowrap text-[13px] font-semibold" :class="record.solvedFirstTry ? 'text-[var(--success)]' : 'text-[var(--danger)]'">
           <svg v-if="record.solvedFirstTry" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-[13px] w-[13px]"><polyline points="20 6 9 17 4 12"/></svg>

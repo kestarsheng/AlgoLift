@@ -7,6 +7,7 @@ import { useProblemManagementStore } from '../stores/problemManagement';
 import { usePracticeRecordStore } from '../stores/practiceRecord';
 import PracticeRecordList from '../components/problem/PracticeRecordList.vue';
 import RelatedNotes from '../components/problem/RelatedNotes.vue';
+import { formatDate } from '../utils/date';
 import type { Difficulty } from '../types';
 
 const route = useRoute();
@@ -31,7 +32,7 @@ const categoryIds = ref<string[]>([]);
 
 /** 返回来源分类列表；无 categoryId 查询参数时回退到分类看板。 */
 const backTo = computed(() => (typeof route.query.categoryId === 'string' ? `/categories/${route.query.categoryId}/problems` : '/categories'));
-const createdAt = computed(() => problem.problem?.createdAt?.slice(0, 10) ?? '');
+const createdAt = computed(() => problem.problem?.createdAt ? formatDate(problem.problem.createdAt) : '—');
 
 const openEdit = (): void => { if (!problem.problem) return; Object.assign(form, { title: problem.problem.title, difficulty: problem.problem.difficulty, internalNote: problem.problem.internalNote ?? '' }); problem.saveError = ''; editOpen.value = true; };
 const saveEdit = async (): Promise<void> => { if (await problem.update(problemId.value, { title: form.title.trim(), difficulty: form.difficulty, internalNote: form.internalNote.trim() || null })) editOpen.value = false; };

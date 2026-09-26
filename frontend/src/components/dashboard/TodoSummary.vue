@@ -3,6 +3,7 @@
 import { computed, onMounted } from 'vue';
 import { RouterLink } from 'vue-router';
 import { useTodoStore } from '../../stores/todo';
+import { formatDate } from '../../utils/date';
 import type { Todo } from '../../types';
 
 const store = useTodoStore();
@@ -13,13 +14,13 @@ const pending = computed<Todo[]>(() => store.items.filter((item) => item.status 
 const dueLabel = (todo: Todo): string => {
   if (!todo.dueDate) return '未设截止';
   const today = new Date(); today.setUTCHours(0, 0, 0, 0);
-  const due = new Date(`${todo.dueDate}T00:00:00.000Z`);
+  const due = new Date(`${formatDate(todo.dueDate)}T00:00:00.000Z`);
   const diff = Math.round((due.getTime() - today.getTime()) / 86400000);
   if (diff < 0) return '已逾期';
   if (diff === 0) return '今日截止';
   if (diff === 1) return '明日截止';
   if (diff <= 7) return `${diff} 天后截止`;
-  return todo.dueDate;
+  return formatDate(todo.dueDate);
 };
 
 const priorityTag = (todo: Todo): { text: string; class: string } => {

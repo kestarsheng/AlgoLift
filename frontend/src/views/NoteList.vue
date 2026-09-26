@@ -6,6 +6,7 @@ import { useNoteListStore } from '../stores/noteList';
 import PaginationNav from '../components/PaginationNav.vue';
 import StateBox from '../components/StateBox.vue';
 import Modal from '../components/Modal.vue';
+import { formatDate } from '../utils/date';
 import type { NoteListItem } from '../types';
 
 const store = useNoteListStore();
@@ -26,9 +27,8 @@ function relativeTime(iso: string | undefined): string {
   if (days <= 0) return '今天';
   if (days === 1) return '昨天';
   if (days < 7) return `${days} 天前`;
-  const time = then.toTimeString().slice(0, 5);
   if (days < 30) return `${Math.floor(days / 7)} 周前`;
-  return `${then.getFullYear()}-${String(then.getMonth() + 1).padStart(2, '0')}-${String(then.getDate()).padStart(2, '0')} ${time}`;
+  return formatDate(iso);
 }
 
 const formOpen = ref(false);
