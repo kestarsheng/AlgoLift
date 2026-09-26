@@ -85,7 +85,7 @@ onMounted(() => store.fetch(id));
       </div>
 
       <div v-if="editing" class="fixed inset-0 z-50 grid place-items-center bg-black/30 p-4" @click.self="editing = false">
-        <form class="w-full max-w-lg space-y-4 rounded-[3px] border border-[var(--color-border)] bg-[var(--color-surface)] p-5" @submit.prevent="save">
+        <form class="w-full max-w-3xl space-y-4 rounded-[3px] border border-[var(--color-border)] bg-[var(--color-surface)] p-5" @submit.prevent="save">
           <h3 class="text-xl font-semibold text-[var(--color-text)] [font-family:var(--font-heading)]">编辑笔记</h3>
           <label class="block text-[15px] text-[var(--color-text-secondary)]">
             标题
