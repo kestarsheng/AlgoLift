@@ -162,7 +162,7 @@ const btnActive = 'bg-[var(--color-accent-light)] text-[var(--color-accent)]';
 
 <template>
   <div class="overflow-hidden rounded-[3px] border border-[var(--color-border)] bg-[var(--color-surface)]">
-    <div class="flex flex-wrap items-center gap-1 border-b border-[var(--color-border)] px-2 py-1.5" :data-tick="tick">
+    <div class="flex flex-wrap items-center gap-1 border-b border-[var(--color-border)] px-2 py-1.5" :data-tick="tick" @click.stop>
       <button type="button" :class="[btn, editor.isActive('bold') ? btnActive : '']" title="加粗" @click="run(() => editor.chain().focus().toggleBold().run())"><span class="font-bold">B</span></button>
       <button type="button" :class="[btn, editor.isActive('italic') ? btnActive : '']" title="斜体" @click="run(() => editor.chain().focus().toggleItalic().run())"><span class="italic font-serif">I</span></button>
       <span class="mx-0.5 h-4 w-px bg-[var(--color-border)]" />
@@ -215,6 +215,7 @@ const btnActive = 'bg-[var(--color-accent-light)] text-[var(--color-accent)]';
   overflow-y: auto;
   outline: none;
   font-size: 16px;
+  font-weight: 400;
   line-height: 1.7;
   color: var(--color-text);
 }
