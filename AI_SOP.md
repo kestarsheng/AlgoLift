@@ -324,6 +324,8 @@ AI 使用 `gh` CLI 完成以下操作，不需要用户手动：
 - 禁止提交 `node_modules/`。
 - 禁止提交 `dist/`、`build/` 等构建产物。
 - 禁止提交本地数据库文件（如 `dev.db`）。
+- 禁止提交 `frontend/.env.electron`（本地 Electron 配置，含本地环境变量）。
+- 禁止提交 `electron/node_modules/`、`electron/dist/`（Electron 依赖与打包产物）。
 - 如果某个文件已经被误提交，必须用 `git rm --cached <file>` 从版本控制中移除，并加入 `.gitignore`。
 
 ---

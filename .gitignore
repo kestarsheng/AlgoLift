@@ -13,7 +13,7 @@ build/
 .env
 .env.*
 !.env.example
-!frontend/.env.electron
+
 
 # Editor
 .vscode/
