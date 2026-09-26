@@ -1,8 +1,9 @@
-<!-- Markdown 渲染器：将 Markdown 文本渲染为 HTML，DOMPurify 清洗防 XSS，识别 ```mermaid 代码块并渲染为图表。 -->
+<!-- Markdown 渲染器：将 Markdown 文本渲染为 HTML，DOMPurify 清洗防 XSS，highlight.js 代码高亮，识别 ```mermaid 代码块并渲染为图表。 -->
 <script setup lang="ts">
 import { nextTick, onMounted, ref, watch } from 'vue';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import hljs from 'highlight.js/lib/common';
 
 const props = defineProps<{ content: string | null }>();
 const root = ref<HTMLElement | null>(null);
@@ -11,6 +12,17 @@ let mermaidPromise: Promise<typeof import('mermaid')['default']> | null = null;
 const loadMermaid = (): Promise<typeof import('mermaid')['default']> => {
   if (!mermaidPromise) mermaidPromise = import('mermaid').then((mod) => { mod.default.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'strict' }); return mod.default; });
   return mermaidPromise;
+};
+
+const highlightCodeBlocks = (container: HTMLElement): void => {
+  container.querySelectorAll('pre code').forEach((block) => {
+    if (block.classList.contains('language-mermaid')) return;
+    const lang = Array.from(block.classList).find((c) => c.startsWith('language-'))?.replace('language-', '');
+    try {
+      if (lang && hljs.getLanguage(lang)) block.innerHTML = hljs.highlight(block.textContent ?? '', { language: lang }).value;
+      else block.innerHTML = hljs.highlightAuto(block.textContent ?? '').value;
+    } catch { /* keep original */ }
+  });
 };
 
 const renderMermaidBlocks = async (container: HTMLElement): Promise<void> => {
@@ -35,6 +47,7 @@ const render = async (): Promise<void> => {
   if (!raw) { root.value.innerHTML = ''; return; }
   const html = DOMPurify.sanitize(marked.parse(raw, { breaks: true, gfm: true, async: false }) as string, { ADD_ATTR: ['target', 'rel'] });
   root.value.innerHTML = html;
+  highlightCodeBlocks(root.value);
   await renderMermaidBlocks(root.value);
 };
 
