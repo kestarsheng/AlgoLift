@@ -36,6 +36,11 @@ const editor = new Editor({
   content: props.modelValue,
   onUpdate: () => emit('update:modelValue', editor.storage.markdown.getMarkdown()),
   onTransaction: () => { tick.value++; updateCodeBlockLabels(); },
+  onBlur: () => {
+    if (editor.state.storedMarks?.length) {
+      editor.view.dispatch(editor.state.tr.setStoredMarks(null));
+    }
+  },
   editorProps: {
     handlePaste: (_view, event) => handlePaste(null, event),
     handleDrop: (_view, event, _pos) => handleDrop(null, event, 0),
@@ -61,6 +66,10 @@ onBeforeUnmount(() => editor.destroy());
 onMounted(() => { void nextTick(() => updateCodeBlockLabels()); });
 
 const run = (command: () => void): void => command();
+
+const onToolbarMousedown = (e: MouseEvent): void => {
+  if ((e.target as HTMLElement).closest('button')) e.preventDefault();
+};
 
 const setLink = (): void => {
   const previous = editor.getAttributes('link').href as string | undefined;
@@ -162,7 +171,7 @@ const btnActive = 'bg-[var(--color-accent-light)] text-[var(--color-accent)]';
 
 <template>
   <div class="overflow-hidden rounded-[3px] border border-[var(--color-border)] bg-[var(--color-surface)]">
-    <div class="flex flex-wrap items-center gap-1 border-b border-[var(--color-border)] px-2 py-1.5" :data-tick="tick" @click.stop>
+    <div class="flex flex-wrap items-center gap-1 border-b border-[var(--color-border)] px-2 py-1.5" :data-tick="tick" @click.stop @mousedown="onToolbarMousedown">
       <button type="button" :class="[btn, editor.isActive('bold') ? btnActive : '']" title="加粗" @click="run(() => editor.chain().focus().toggleBold().run())"><span class="font-bold">B</span></button>
       <button type="button" :class="[btn, editor.isActive('italic') ? btnActive : '']" title="斜体" @click="run(() => editor.chain().focus().toggleItalic().run())"><span class="italic font-serif">I</span></button>
       <span class="mx-0.5 h-4 w-px bg-[var(--color-border)]" />
