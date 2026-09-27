@@ -26,6 +26,8 @@
 | 请求体 | `Content-Type: application/json` |
 | 分页 | 默认 `page=1`、`pageSize=20`，最大 100 |
 | 难度 | `EASY`、`MEDIUM`、`HARD` |
+| CORS | 白名单模式；`FRONTEND_URL` 支持逗号分隔多个源；无 Origin 头（同源/curl/Electron）放行 |
+| 速率限制 | `POST /api/auth/register`：10 次/小时/IP；`POST /api/auth/login`：20 次/15分钟/IP；超限返回 `429` |
 
 ## Health
 
@@ -90,7 +92,7 @@
 
 前端题目详情页由独立 `problemDetail` 与 `practiceRecord` Pinia Store 驱动：详情加载成功后同时请求练习记录，分别展示加载中、错误和空状态；练习记录支持 `practicedAt`、`solvedFirstTry`、`remark` 表单，创建成功后回到第 1 页并刷新列表，删除前需确认且失败会保留错误提示。
 
-题目详情管理流程：编辑标题、难度或内部笔记时调用 `PATCH /api/problems/{problemId}`，分类管理使用 `PUT /api/problems/{problemId}/categories` 替换分类 ID 数组（空数组表示取消全部分类），题解笔记管理使用 `PUT /api/problems/{problemId}/notes` 替换笔记 ID 数组（空数组表示取消全部关联）；两类关联保存成功后重新请求题目详情。删除按钮必须确认后调用 `DELETE /api/problems/{problemId}`，成功后返回来源分类列表（带 `categoryId` 查询参数）或分类看板，失败时保留详情并展示错误。分类题目列表进入详情时使用 `/problems/{problemId}?categoryId={categoryId}`，因此删除后可准确返回来源分类。
+题目详情管理流程：编辑标题、难度或内部笔记时调用 `PATCH /api/problems/{problemId}`，分类管理使用 `PUT /api/problems/{problemId}/categories` 替换分类 ID 数组（空数组表示取消全部分类），题解笔记管理使用 `PUT /api/problems/{problemId}/notes` 替换笔记 ID 数组（空数组表示取消全部关联）；两类关联保存成功后重新请求题目详情。删除按钮必须确认后调用 `DELETE /api/problems/{problemId}`，确认弹窗显示练习记录条数与关联笔记篇数，成功后返回来源分类列表（带 `categoryId` 查询参数）或分类看板，失败时保留详情并展示错误。分类题目列表进入详情时使用 `/problems/{problemId}?categoryId={categoryId}`，因此删除后可准确返回来源分类。
 
 | 方法 | 路径 | 鉴权 | 请求参数/请求体 | 响应示例 | 错误码 |
 |---|---|---|---|---|---|
@@ -154,7 +156,7 @@ Todo 响应包含 `isOverdue`：截止日期早于当天且状态不是 `COMPLET
 
 前端学习进度页面入口为 `/progress`，提供按主题/描述关键词搜索、分页、进度条展示，以及新增、编辑和删除操作；表单提交期间按钮会禁用，删除前需要确认。
 
-Dashboard 数据概览入口为 `/dashboard`（根路径 `/` 默认重定向），由前端并行组合现有分类、题目、错题、笔记、待办和进度接口的分页总数与列表数据；待办总数、未完成数和逾期数分别使用对应筛选查询。难度分布柱状图与 52 周刷题热力图使用 `GET /api/stats/dashboard` 聚合数据，热力图按 52 周 × 7 格完整网格排列，周日为列首，未来日期标记为不可用。各模块独立记录错误，单个接口失败时页面仍展示其余模块并提示部分失败；全部数据为空时展示引导空状态。
+Dashboard 数据概览入口为 `/dashboard`（根路径 `/` 默认重定向），由前端并行组合现有分类、题目、错题、笔记、待办和进度接口的分页总数与列表数据；待办摘要复用同一份待办列表数据，不再单独发请求。难度分布柱状图与 52 周刷题热力图使用 `GET /api/stats/dashboard` 聚合数据，热力图按 52 周 × 7 格完整网格排列，周日为列首，未来日期标记为不可用，"今天"以本地时区计算。各模块独立记录错误，单个接口失败时页面仍展示其余模块并提示部分失败；全部数据为空时展示引导空状态。
 
 ## Wrong 错题
 

@@ -1,4 +1,4 @@
-// 覆盖 Markdown 源码清洗：保留语法符号、剥离危险 HTML 标签与属性。
+// 覆盖 Markdown 源码清洗：保留语法符号、剥离危险 HTML 标签与属性，实体编码注入不被反转义复用。
 import { cleanMarkdown } from '../src/config/markdown';
 
 describe('cleanMarkdown', () => {
@@ -26,5 +26,17 @@ describe('cleanMarkdown', () => {
     const out = cleanMarkdown('<img src="http://x.com/a.png" alt="图">');
     expect(out).toContain('src="http://x.com/a.png"');
     expect(out).toContain('alt="图"');
+  });
+  it('实体编码的 script 不会因反转义而被复用', () => {
+    expect(cleanMarkdown('&lt;script&gt;alert(1)&lt;/script&gt;')).not.toContain('<script');
+    expect(cleanMarkdown('&#x3C;script&#x3E;alert(1)&#x3C;/script&#x3E;')).not.toContain('<script');
+  });
+  it('实体编码的注入属性不会因反转义而被复用', () => {
+    expect(cleanMarkdown('&lt;img src=x onerror=alert(1)&gt;')).not.toContain('onerror');
+    expect(cleanMarkdown('&lt;iframe src=x&gt;')).not.toContain('iframe');
+    expect(cleanMarkdown('&lt;a href="javascript:alert(1)"&gt;x&lt;/a&gt;')).not.toContain('javascript');
+  });
+  it('双重编码的实体保持编码，不二次解码还原', () => {
+    expect(cleanMarkdown('&amp;lt;script&amp;gt;')).not.toContain('<script');
   });
 });

@@ -1,20 +1,19 @@
-<!-- 今日待办摘要：从 todo store 加载未完成待办，支持勾选与跳转全部。 -->
+<!-- 今日待办摘要：复用 dashboard store 的待办数据，支持勾选与跳转全部。 -->
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
-import { useTodoStore } from '../../stores/todo';
+import { useDashboardStore } from '../../stores/dashboard';
 import { formatDate } from '../../utils/date';
 import type { Todo } from '../../types';
 
-const store = useTodoStore();
-onMounted(() => { void store.fetch(); });
+const dashboard = useDashboardStore();
 
-const pending = computed<Todo[]>(() => store.items.filter((item) => item.status !== 'COMPLETED').slice(0, 4));
+const pending = computed<Todo[]>(() => dashboard.todos.data.data.filter((item) => item.status !== 'COMPLETED').slice(0, 4));
 
 const dueLabel = (todo: Todo): string => {
   if (!todo.dueDate) return '未设截止';
-  const today = new Date(); today.setUTCHours(0, 0, 0, 0);
-  const due = new Date(`${formatDate(todo.dueDate)}T00:00:00.000Z`);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const due = new Date(`${formatDate(todo.dueDate)}T00:00:00`);
   const diff = Math.round((due.getTime() - today.getTime()) / 86400000);
   if (diff < 0) return '已逾期';
   if (diff === 0) return '今日截止';
@@ -39,12 +38,12 @@ const priorityTag = (todo: Todo): { text: string; class: string } => {
       <span class="text-[15px] text-[var(--color-text-muted)]">{{ pending.length }} 项未完成</span>
       <RouterLink to="/todos" class="ml-auto text-[15px] font-medium text-[var(--color-accent)] hover:text-[var(--color-accent-hover)]">全部 →</RouterLink>
     </div>
-    <p v-if="store.loading" class="py-4 text-center text-[var(--color-text-muted)]">正在加载待办…</p>
-    <p v-else-if="store.listError" class="py-4 text-center text-[var(--danger)]">{{ store.listError }}</p>
+    <p v-if="dashboard.loading" class="py-4 text-center text-[var(--color-text-muted)]">正在加载待办…</p>
+    <p v-else-if="dashboard.todos.error" class="py-4 text-center text-[var(--danger)]">{{ dashboard.todos.error }}</p>
     <p v-else-if="!pending.length" class="py-4 text-center text-[var(--color-text-muted)]">没有待处理的待办</p>
     <div v-else class="flex flex-col">
       <div v-for="(todo, index) in pending" :key="todo.id" class="flex items-start gap-2 py-2" :class="index > 0 ? 'border-t border-[var(--color-border)]' : ''">
-        <button class="mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded-[2px] border-[1.5px] transition-colors" :class="todo.status === 'COMPLETED' ? 'border-[var(--color-accent)] bg-[var(--color-accent)]' : 'border-[var(--color-border)] hover:border-[var(--color-accent)]'" :aria-label="todo.status === 'COMPLETED' ? '标记为未完成' : '标记为已完成'" @click="store.toggle(todo)">
+        <button class="mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded-[2px] border-[1.5px] transition-colors" :class="todo.status === 'COMPLETED' ? 'border-[var(--color-accent)] bg-[var(--color-accent)]' : 'border-[var(--color-border)] hover:border-[var(--color-accent)]'" :aria-label="todo.status === 'COMPLETED' ? '标记为未完成' : '标记为已完成'" @click="dashboard.toggleTodo(todo)">
           <svg v-if="todo.status === 'COMPLETED'" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="h-2 w-2"><polyline points="20 6 9 17 4 12"/></svg>
         </button>
         <div class="min-w-0 flex-1">

@@ -123,6 +123,8 @@ describe('ProblemDetail', () => {
     const push = vi.spyOn(router, 'push');
     await wrapper.findAll('button').find((button) => button.text().includes('删除题目'))!.trigger('click');
     expect(wrapper.text()).toContain('确认删除「Two Sum」吗');
+    expect(wrapper.text()).toContain('5 条练习记录');
+    expect(wrapper.text()).toContain('1 篇关联笔记');
     await wrapper.findAll('button').find((button) => button.text() === '确认删除')!.trigger('click');
     await flushPromises();
     expect(mocked.delete).toHaveBeenCalledWith('/problems/p1');
