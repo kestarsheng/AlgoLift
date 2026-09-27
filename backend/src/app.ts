@@ -23,8 +23,19 @@ import { uploadsRouter } from './modules/uploads/uploads.route';
 
 export const app = express();
 
-// 生产环境部署到固定域名后，应改成白名单。
-app.use(cors());
+// 信任一层反向代理（ngrok/Vercel），使 rate-limit 能按 X-Forwarded-For 中的真实客户端 IP 计数。
+app.set('trust proxy', 1);
+
+// CORS 白名单：仅允许 FRONTEND_URL 配置的来源跨源访问，无 Origin（同源/服务器调用）放行。
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || config.frontendOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, false);
+    }
+  },
+}));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

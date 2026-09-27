@@ -83,16 +83,40 @@ function parseEnvFile(filePath) {
   return result;
 }
 
-/** 组装后端子进程环境变量：electron/.env 覆盖 backend/.env，再回退到 process.env。 */
+/** 读取或生成持久化的 JWT 密钥（仅打包模式）；返回 null 表示用 .env 中的值。 */
+function getPersistentJwtSecret() {
+  if (!app.isPackaged) return null;
+  const secretPath = path.join(app.getPath('userData'), 'jwt-secret');
+  try {
+    if (fs.existsSync(secretPath)) {
+      const existing = fs.readFileSync(secretPath, 'utf-8').trim();
+      if (existing.length >= 32) return existing;
+    }
+  } catch (e) {
+    console.error('[electron] failed to read jwt-secret:', e.message);
+  }
+  const crypto = require('crypto');
+  const secret = crypto.randomBytes(64).toString('hex');
+  try {
+    fs.writeFileSync(secretPath, secret, { mode: 0o600 });
+    console.log('[electron] generated new JWT secret at', secretPath);
+  } catch (e) {
+    console.error('[electron] failed to write jwt-secret:', e.message);
+  }
+  return secret;
+}
+
+/** 组装后端子进程环境变量：electron/.env 覆盖 backend/.env，再回退到 process.env。打包模式下 JWT_SECRET 使用运行时生成并持久化到 userData。 */
 function getBackendEnv(paths) {
   const electronEnv = parseEnvFile(path.join(__dirname, '.env'));
   const backendEnv = parseEnvFile(path.join(paths.backendDir, '.env'));
   const merged = { ...backendEnv, ...electronEnv };
+  const persistentSecret = getPersistentJwtSecret();
   return {
     ...process.env,
     ELECTRON_RUN_AS_NODE: '1',
     DATABASE_URL: merged.DATABASE_URL || process.env.DATABASE_URL,
-    JWT_SECRET: merged.JWT_SECRET || process.env.JWT_SECRET,
+    JWT_SECRET: persistentSecret || merged.JWT_SECRET || process.env.JWT_SECRET,
     PORT: String(BACKEND_PORT),
     FRONTEND_URL: `http://localhost:${BACKEND_PORT}`,
   };

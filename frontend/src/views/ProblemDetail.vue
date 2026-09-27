@@ -168,7 +168,7 @@ onMounted(load);
       <div v-if="confirming" class="fixed inset-0 z-50 grid place-items-center bg-black/30 p-4" @click.self="confirming = false">
         <div class="w-full max-w-sm space-y-4 rounded-[3px] border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
           <h3 class="text-xl font-semibold text-[var(--color-text)] [font-family:var(--font-heading)]">删除题目</h3>
-          <p class="text-[15px] leading-relaxed text-[var(--color-text-secondary)]">确认删除「{{ problem.problem.title }}」吗？练习记录与关联笔记会一并解除，此操作不可撤销。</p>
+          <p class="text-[15px] leading-relaxed text-[var(--color-text-secondary)]">确认删除「{{ problem.problem.title }}」吗？将永久删除 {{ practice.total }} 条练习记录并解除 {{ problem.problem.notes.length }} 篇关联笔记，此操作不可撤销。</p>
           <p v-if="problem.deleteError" role="alert" class="text-sm text-[var(--danger)]">{{ problem.deleteError }}</p>
           <div class="flex justify-end gap-3">
             <button type="button" class="rounded-[3px] border border-[var(--color-border)] px-4 py-2 text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-hover)]" @click="confirming = false">取消</button>
