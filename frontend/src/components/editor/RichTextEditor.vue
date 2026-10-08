@@ -76,6 +76,7 @@ onBeforeUnmount(() => editor.destroy());
 onMounted(() => {
   moveCaretToContentEnd();
   void nextTick(() => updateCodeBlockLabels());
+
 });
 
 const run = (command: () => void): void => command();
@@ -178,7 +179,7 @@ const insertTable = (): void => {
   editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
 };
 
-const btn = 'inline-flex h-[30px] w-[30px] items-center justify-center rounded-[3px] text-[15px] font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-hover)] hover:text-[var(--color-text)]';
+const btn = 'inline-flex h-[30px] w-[30px] items-center justify-center rounded-[3px] text-[15px] font-medium text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text)]';
 const btnActive = 'bg-[var(--color-accent-light)] text-[var(--color-accent)]';
 </script>
 
