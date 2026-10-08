@@ -17,6 +17,7 @@
 - [Wrong 错题](#wrong-错题)
 - [WrongNote 错题题解笔记关联](#wrongnote-错题题解笔记关联)
 - [Stats 数据概览统计](#stats-数据概览统计)
+- [Search 全局搜索](#search-全局搜索)
 
 ## 通用约定
 
@@ -119,6 +120,9 @@
 | POST | `/api/notes` | JSON：`title`、`content`、`solutionLinks` | `201`：`{ data: Note }` | `400 INVALID_NOTE_INPUT` |
 | PATCH | `/api/notes/{noteId}` | JSON：至少一个可编辑字段 | `200`：`{ data: Note }` | `400 INVALID_NOTE_INPUT`、`404 NOTE_NOT_FOUND` |
 | DELETE | `/api/notes/{noteId}` | Path：`noteId` | `204` | `404 NOTE_NOT_FOUND` |
+| GET | `/api/notes/{noteId}/wrongs` | Path：`noteId` | `200`：`{ data: { noteId, wrongs: Wrong[] } }` | `404 NOTE_NOT_FOUND` |
+
+`GET /notes/{noteId}/wrongs` 为聚合接口，服务端单查询返回该笔记关联的错题列表（通过 WrongNote 中间表反向查询），消除前端 N+1 请求。
 
 `solutionLinks` 为 `{ name, url }[]`，URL 仅支持 HTTP/HTTPS；本模块不提供题目或错题关联接口。
 
@@ -195,3 +199,18 @@ Dashboard 数据概览入口为 `/dashboard`（根路径 `/` 默认重定向）�
 | GET | `/api/stats/dashboard` | Query：`days` 可选（统计窗口天数，1–365，默认 119） | `200`：`{ "difficultyCounts": { "EASY": 0, "MEDIUM": 0, "HARD": 0 }, "dailyPractice": [{ "date": "YYYY-MM-DD", "count": 2 }], "totalProblems": 0, "completedProblems": 0, "accuracy": 0 }` | `401 UNAUTHORIZED` |
 
 `difficultyCounts` 为当前用户全部题目按难度计数；`dailyPractice` 为统计窗口内每天的练习记录条数，仅返回有记录的日期，缺省日期由前端补零；日期由练习记录的 `practicedAt`（UTC 午夜）转换而来。`totalProblems` 为当前用户全部题目总数；`completedProblems` 为有练习记录的去重题目数；`accuracy` 为一遍做对率（`solvedFirstTry` 为 true 的练习数 / 总练习数 × 100，四舍五入，无练习记录时为 0）。
+| 方法 | 路径 | 请求参数/请求体 | 成功响应 | 错误 |
+|---|---|---|---|---|
+| GET | `/api/stats/suggestions` | 无 | `200`：`{ "suggestions": [Suggestion] }` | `401 UNAUTHORIZED` |
+
+`Suggestion` 结构：`{ "type": "review_wrong|retry_low_accuracy|practice_unsolved|complete_todo|keep_going", "title": "...", "description": "...", "priority": "high|medium|low", "targetId"?: "uuid", "targetType"?: "problem|wrong|todo" }`。基于当前用户的错题集中分类、低正确率题目（一遍做对率 < 50%）、未练习题目和未完成待办生成真实建议；无数据时返回默认"继续保持"建议。
+
+## Search 全局搜索
+
+按标题模糊命中题目、错题、笔记和待办，按类型分组返回 top 5，按当前用户隔离。
+
+| 方法 | 路径 | 请求参数/请求体 | 成功响应 | 错误 |
+|---|---|---|---|---|
+| GET | `/api/search` | Query：`q` 搜索关键词 | `200`：`{ "data": { "problems": [...], "wrongs": [...], "notes": [...], "todos": [...] } }` | `401 UNAUTHORIZED` |
+
+每类最多返回 5 条，按 `updatedAt` 倒序排列。空关键词返回全空数组。`problems`/`wrongs` 项含 `id`、`title`、`difficulty`；`notes` 项含 `id`、`title`；`todos` 项含 `id`、`title`、`status`、`priority`。
