@@ -13,6 +13,7 @@ const HEATMAP_WEEKS = 52; const HEATMAP_DAYS = HEATMAP_WEEKS * 7;
 export interface HeatmapDay { date: string; count: number; level: number }
 export interface MasteryItem { id: string; name: string; percent: number }
 export interface KnowledgeItem { id: string; title: string; percent: number; description: string }
+export interface SuggestionItem { type: string; title: string; description: string; priority: string; targetId?: string; targetType?: string; }
 
 const localDateStr = (d: Date): string => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const utcToLocalStr = (utc: string): string => localDateStr(new Date(`${utc}T00:00:00.000Z`));
@@ -27,7 +28,7 @@ const buildHeatmap = (dailyPractice: { date: string; count: number }[]): Heatmap
 };
 
 export const useDashboardStore = defineStore('dashboard', {
-  state: () => ({ loading: false, categories: { data: [] as Category[], error: '' } as Module<Category[]>, problems: { data: empty<ProblemListItem>(), error: '' } as Module<Page<ProblemListItem>>, wrongs: { data: empty<WrongListItem>(), error: '' } as Module<Page<WrongListItem>>, notes: { data: empty<NoteListItem>(), error: '' } as Module<Page<NoteListItem>>, todos: { data: empty<Todo>(), error: '' } as Module<Page<Todo>>, progress: { data: empty<Progress>(), error: '' } as Module<Page<Progress>>, stats: { data: { difficultyCounts: { EASY: 0, MEDIUM: 0, HARD: 0 }, dailyPractice: [], totalProblems: 0, completedProblems: 0, accuracy: 0 } as DashboardStats, error: '' } as Module<DashboardStats>, statsLoading: false }),
+  state: () => ({ loading: false, categories: { data: [] as Category[], error: '' } as Module<Category[]>, problems: { data: empty<ProblemListItem>(), error: '' } as Module<Page<ProblemListItem>>, wrongs: { data: empty<WrongListItem>(), error: '' } as Module<Page<WrongListItem>>, notes: { data: empty<NoteListItem>(), error: '' } as Module<Page<NoteListItem>>, todos: { data: empty<Todo>(), error: '' } as Module<Page<Todo>>, progress: { data: empty<Progress>(), error: '' } as Module<Page<Progress>>, stats: { data: { difficultyCounts: { EASY: 0, MEDIUM: 0, HARD: 0 }, dailyPractice: [], totalProblems: 0, completedProblems: 0, accuracy: 0 } as DashboardStats, error: '' } as Module<DashboardStats>, statsLoading: false, suggestions: { data: [] as SuggestionItem[], error: '' } as Module<SuggestionItem[]> }),
   getters: {
     averageProgress: (state): number => state.progress.data.data.length ? Math.round(state.progress.data.data.reduce((sum, item) => sum + item.progress, 0) / state.progress.data.data.length) : 0,
     latestProgress: (state): Progress | null => state.progress.data.data[0] ?? null,
@@ -64,6 +65,7 @@ export const useDashboardStore = defineStore('dashboard', {
       await Promise.all([run(categoryRequest, this.categories, '分类加载失败'), run(api.get<Page<ProblemListItem>>('/problems', { params: { page: 1, pageSize: 1 } }), this.problems, '题目加载失败'), run(api.get<Page<WrongListItem>>('/wrongs', { params: page }), this.wrongs, '错题加载失败'), run(api.get<Page<NoteListItem>>('/notes', { params: page }), this.notes, '笔记加载失败'), run(api.get<Page<Todo>>('/todos', { params: page }), this.todos, '待办加载失败'), run(api.get<Page<Progress>>('/progresses', { params: page }), this.progress, '进度加载失败')]); this.loading = false;
     },
     async fetchStats(): Promise<void> { this.statsLoading = true; this.stats.error = ''; try { this.stats.data = (await api.get<DashboardStats>('/stats/dashboard', { params: { days: HEATMAP_DAYS } })).data; } catch (error: unknown) { this.stats.error = message(error, '统计数据加载失败'); } finally { this.statsLoading = false; } },
+    async fetchSuggestions(): Promise<void> { try { this.suggestions.data = (await api.get<{ suggestions: SuggestionItem[] }>('/stats/suggestions')).data.suggestions; this.suggestions.error = ''; } catch (error: unknown) { this.suggestions.error = message(error, '建议加载失败'); } },
     async toggleTodo(todo: Todo): Promise<void> { try { await api.patch(`/todos/${todo.id}`, { status: todo.status === 'COMPLETED' ? 'TODO' : 'COMPLETED' }); const item = this.todos.data.data.find((t) => t.id === todo.id); if (item) item.status = todo.status === 'COMPLETED' ? 'TODO' : 'COMPLETED'; } catch (error: unknown) { this.todos.error = message(error, '待办更新失败'); } },
   },
 });
