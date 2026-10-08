@@ -37,3 +37,35 @@ export const getDashboardStats = async (userId: string, days: number): Promise<D
     accuracy: practiceTotal === 0 ? 0 : Math.round((firstTryTotal / practiceTotal) * 100)
   };
 };
+export interface Suggestion { type: string; title: string; description: string; priority: string; targetId?: string; targetType?: string; }
+export interface SuggestionsResponse { suggestions: Suggestion[]; }
+
+export const getSuggestions = async (userId: string): Promise<SuggestionsResponse> => {
+  const suggestions: Suggestion[] = [];
+  const [wrongsWithCategory, lowAccuracyProblems, unsolvedProblems, pendingTodos] = await Promise.all([
+    prisma.wrong.findMany({ where: { userId, category: { not: null } }, select: { category: true } }),
+    prisma.problem.findMany({ where: { userId, practiceRecords: { some: { solvedFirstTry: false } } }, select: { id: true, title: true, practiceRecords: { select: { solvedFirstTry: true } } }, take: 3, orderBy: { updatedAt: 'desc' } }),
+    prisma.problem.findMany({ where: { userId, practiceRecords: { none: {} } }, select: { id: true, title: true, difficulty: true }, take: 3, orderBy: { createdAt: 'desc' } }),
+    prisma.todo.findMany({ where: { userId, status: { not: 'COMPLETED' } }, select: { id: true, title: true, priority: true, dueDate: true }, take: 3, orderBy: { dueDate: 'asc' } }),
+  ]);
+  const categoryCounts = new Map<string, number>();
+  for (const w of wrongsWithCategory) { if (w.category) categoryCounts.set(w.category, (categoryCounts.get(w.category) ?? 0) + 1); }
+  const topCategory = [...categoryCounts.entries()].sort((a, b) => b[1] - a[1])[0];
+  if (topCategory) {
+    suggestions.push({ type: 'review_wrong', title: `复习错题集中的分类：${topCategory[0]}`, description: `该分类有 ${topCategory[1]} 道错题，优先攻克`, priority: 'high', targetType: 'wrong' });
+  }
+  const lowAccuracy = lowAccuracyProblems.find((p) => { const total = p.practiceRecords.length; const fail = p.practiceRecords.filter((r) => !r.solvedFirstTry).length; return total > 0 && fail / total >= 0.5; });
+  if (lowAccuracy) {
+    suggestions.push({ type: 'retry_low_accuracy', title: `重做低正确率题目：${lowAccuracy.title}`, description: '该题目一遍做对率低于 50%，建议再练一次', priority: 'high', targetId: lowAccuracy.id, targetType: 'problem' });
+  }
+  if (unsolvedProblems.length > 0) {
+    suggestions.push({ type: 'practice_unsolved', title: `练习未做过的题目：${unsolvedProblems[0].title}`, description: `还有 ${unsolvedProblems.length} 道题目从未练习，开始刷题吧`, priority: 'medium', targetId: unsolvedProblems[0].id, targetType: 'problem' });
+  }
+  if (pendingTodos.length > 0) {
+    suggestions.push({ type: 'complete_todo', title: `完成待办：${pendingTodos[0].title}`, description: `还有 ${pendingTodos.length} 项未完成待办，优先处理最近的`, priority: 'medium', targetId: pendingTodos[0].id, targetType: 'todo' });
+  }
+  if (suggestions.length === 0) {
+    suggestions.push({ type: 'keep_going', title: '继续保持学习节奏', description: '暂无待处理的学习建议，继续每日刷题巩固吧', priority: 'low' });
+  }
+  return { suggestions };
+};

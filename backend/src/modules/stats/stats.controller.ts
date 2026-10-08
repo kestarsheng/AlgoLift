@@ -8,3 +8,6 @@ export const getDashboard = async (req: Request, res: Response, next: NextFuncti
     res.json(await service.getDashboardStats(req.auth!.sub, days));
   } catch (error: unknown) { next(error); }
 };
+export const getSuggestions = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try { res.json(await service.getSuggestions(req.auth!.sub)); } catch (error: unknown) { next(error); }
+};
