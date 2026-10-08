@@ -36,6 +36,7 @@ const editor = new Editor({
   content: props.modelValue,
   onUpdate: () => emit('update:modelValue', editor.storage.markdown.getMarkdown()),
   onTransaction: () => { tick.value++; updateCodeBlockLabels(); },
+
   onBlur: () => {
     if (editor.state.storedMarks?.length) {
       editor.view.dispatch(editor.state.tr.setStoredMarks(null));
@@ -58,12 +59,24 @@ const updateCodeBlockLabels = (): void => {
   });
 };
 
+const moveCaretToContentEnd = (): void => {
+  const size = editor.state.doc.content.size;
+  if (size > 0) editor.commands.setTextSelection({ from: size, to: size });
+};
+
 watch(() => props.modelValue, (value: string) => {
-  if (editor.storage.markdown.getMarkdown() !== value) { editor.commands.setContent(value || '', { emitUpdate: false }); void nextTick(() => updateCodeBlockLabels()); }
+  if (editor.storage.markdown.getMarkdown() !== value) {
+    editor.commands.setContent(value || '', { emitUpdate: false });
+    moveCaretToContentEnd();
+    void nextTick(() => updateCodeBlockLabels());
+  }
 });
 
 onBeforeUnmount(() => editor.destroy());
-onMounted(() => { void nextTick(() => updateCodeBlockLabels()); });
+onMounted(() => {
+  moveCaretToContentEnd();
+  void nextTick(() => updateCodeBlockLabels());
+});
 
 const run = (command: () => void): void => command();
 
