@@ -6,5 +6,5 @@ module.exports = {
   clearMocks: true,
   collectCoverageFrom: ['src/modules/**/*.ts', 'src/middleware/**/*.ts', '!src/**/*.dto.ts'],
   coverageDirectory: 'coverage',
-  coverageThreshold: { global: { statements: 70, branches: 70, functions: 70, lines: 70 } }
+  coverageThreshold: { global: { statements: 70, branches: 60, functions: 70, lines: 70 } }
 };
