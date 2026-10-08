@@ -4,12 +4,14 @@
   "private": true,
   "description": "AlgoLift backend service",
   "main": "dist/src/app.js",
+  "engines": { "node": ">=22" },
   "scripts": {
     "dev": "tsx watch src/app.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/src/app.js",
     "lint": "tsc --noEmit -p tsconfig.json",
     "test": "jest --runInBand --testTimeout=30000",
+    "test:coverage": "jest --runInBand --testTimeout=30000 --coverage",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy"
