@@ -2,6 +2,7 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { api } from '../src/api';
 import { useDashboardStore } from '../src/stores/dashboard';
+import { todayStr } from '../src/utils/date';
 
 vi.mock('../src/api', () => ({ api: { get: vi.fn() } }));
 const page = { data: [], pagination: { page: 1, pageSize: 10, total: 0, totalPages: 0 } };
@@ -17,7 +18,7 @@ describe('dashboard store', () => {
     vi.mocked(api.get).mockImplementation((path) => Promise.resolve({ data: path === '/categories' ? { data: [{ id: 'c1', name: '数组', problemCount: 2 }] } : path === '/progresses' ? { data: [{ id: 'p1', title: '二分', progress: 60 }], pagination: page.pagination } : { data: [], pagination: { ...page.pagination, total: 3 } } }));
     const store = useDashboardStore();
     await store.fetch();
-    expect(api.get).toHaveBeenCalledTimes(8);
+    expect(api.get).toHaveBeenCalledTimes(6);
     expect(store.categories.data).toHaveLength(1);
     expect(store.problems.data.pagination.total).toBe(3);
     expect(store.loading).toBe(false);
@@ -34,7 +35,7 @@ describe('dashboard store', () => {
 
   it('derives totals, accuracy, and today count from backend stats fields', () => {
     const store = useDashboardStore();
-    store.stats.data = { difficultyCounts: { EASY: 5, MEDIUM: 3, HARD: 2 }, dailyPractice: [{ date: new Date().toISOString().slice(0, 10), count: 4 }], totalProblems: 10, completedProblems: 7, accuracy: 85 };
+    store.stats.data = { difficultyCounts: { EASY: 5, MEDIUM: 3, HARD: 2 }, dailyPractice: [{ date: todayStr(), count: 4 }], totalProblems: 10, completedProblems: 7, accuracy: 85 };
     expect(store.totalProblems).toBe(10);
     expect(store.completedProblems).toBe(7);
     expect(store.todayCount).toBe(4);

@@ -2,6 +2,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { HeatmapDay } from '../../stores/dashboard';
+import { todayStr } from '../../utils/date';
 
 const props = defineProps<{ days: HeatmapDay[] }>();
 
@@ -29,7 +30,7 @@ const monthLabels = computed<MonthLabel[]>(() => {
   return labels;
 });
 
-const todayDate = new Date().toISOString().slice(0, 10);
+const todayDate = todayStr();
 const heatClass = (level: number): string => `bg-[var(--heat-${level < 0 ? 0 : level})]`;
 const cellTitle = (day: HeatmapDay): string => day.level < 0 || !day.date ? '' : `${day.date} · ${day.count} 次练习`;
 const monthWidth = (span: number): string => `${span * (CELL + GAP) - GAP}px`;

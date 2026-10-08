@@ -89,6 +89,18 @@ describe('ProblemDetail', () => {
     expect(mocked.patch).toHaveBeenCalledWith('/problems/p1', { title: 'Two Sum II', difficulty: 'EASY', internalNote: '<p>哈希表思路</p>' });
   });
 
+  it('编辑器不被 <label> 包裹，避免点击工具栏按钮触发标签默认行为导致 B 误亮', async () => {
+    const wrapper = await mountDetail();
+    await wrapper.findAll('button').find((button) => button.text().includes('编辑题目'))!.trigger('click');
+    const boldBtn = wrapper.find('button[title="加粗"]');
+    expect(boldBtn.exists()).toBe(true);
+    // <label> 包裹交互式编辑器时，点击其中任意 button 都会触发 label 的
+    // 默认激活行为（把点击转发给第一个 labelable 控件），造成按钮出现
+    // 非预期的激活/悬停视觉状态。编辑器必须放在普通容器内。
+    const inLabel = boldBtn.element.closest('label');
+    expect(inLabel).toBeNull();
+  });
+
   it('管理分类时默认勾选已关联分类并调用 PUT', async () => {
     const wrapper = await mountDetail();
     await wrapper.findAll('button').find((button) => button.text().includes('管理分类'))!.trigger('click');
@@ -123,6 +135,8 @@ describe('ProblemDetail', () => {
     const push = vi.spyOn(router, 'push');
     await wrapper.findAll('button').find((button) => button.text().includes('删除题目'))!.trigger('click');
     expect(wrapper.text()).toContain('确认删除「Two Sum」吗');
+    expect(wrapper.text()).toContain('5 条练习记录');
+    expect(wrapper.text()).toContain('1 篇关联笔记');
     await wrapper.findAll('button').find((button) => button.text() === '确认删除')!.trigger('click');
     await flushPromises();
     expect(mocked.delete).toHaveBeenCalledWith('/problems/p1');

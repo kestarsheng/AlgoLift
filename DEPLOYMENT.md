@@ -134,7 +134,7 @@ ngrok http 3000
 | `DATABASE_URL` | Neon Pooled Connection String，如 `postgresql://user:pass@ep-xxx-pooler.aws.neon.tech/neondb?sslmode=require` |
 | `JWT_SECRET` | JWT 签名密钥（随机长字符串） |
 | `PORT` | 服务端口，本地为 `3000` |
-| `FRONTEND_URL` | CORS 允许的前端源，如 `https://<project>.vercel.app` |
+| `FRONTEND_URL` | CORS 允许的前端源，支持逗号分隔多个源，如 `https://a.vercel.app,https://b.vercel.app` |
 
 ---
 
@@ -214,9 +214,9 @@ postgresql://username:password@ep-xxx.c-xxx.aws.neon.tech/neondb?sslmode=require
 | 变量名 | 示例值 |
 |--------|---------|
 | `DATABASE_URL` | `postgresql://...` (Neon 连接串) |
-| `JWT_SECRET` | 随机生成的密钥字符串 |
+| `JWT_SECRET` | 随机生成的密钥字符串（Electron 打包模式下由 `electron/main.js` 运行时生成并持久化到 `userData/jwt-secret`，忽略 `.env` 中的值） |
 | `PORT` | `3000` |
-| `FRONTEND_URL` | `https://<project>.vercel.app` |
+| `FRONTEND_URL` | `https://<project>.vercel.app`（逗号分隔多源） |
 
 ---
 
@@ -226,8 +226,9 @@ postgresql://username:password@ep-xxx.c-xxx.aws.neon.tech/neondb?sslmode=require
 
 如果前端请求后端时出现 CORS 错误：
 
-- 跨源直连方案：检查后端 `backend/src/config/env.ts` 的 `FRONTEND_URL` 是否包含前端 Vercel 域名。
+- 跨源直连方案：检查后端 `backend/src/config/env.ts` 的 `FRONTEND_URL` 是否包含前端 Vercel 域名（支持逗号分隔多个源）。
 - 同源 `/api` 方案：请求由 Vercel 边缘代理发出，不受浏览器 CORS 限制，一般无需处理；但需确认后端 CORS 允许 Vercel 的源（如有）。
+- 无 Origin 头的请求（同源、curl、Electron `app://` 协议）默认放行。
 
 ### 7.2 数据库连接失败
 
@@ -248,11 +249,25 @@ postgresql://username:password@ep-xxx.c-xxx.aws.neon.tech/neondb?sslmode=require
 3. 移除 `frontend/src/api.ts` 中的 `ngrok-skip-browser-warning` 请求头。
 4. 重新部署前端。
 
+### 7.5 登录/注册被限流（429）
+
+- `POST /api/auth/register`：每 IP 每小时 10 次。
+- `POST /api/auth/login`：每 IP 每 15 分钟 20 次。
+- 超限返回 `429 Too Many Requests`，响应体含 `Retry-After` 头。
+- 开发环境下 `NODE_ENV=test` 自动跳过限流。
+
+### 7.6 Electron 打包后 JWT_SECRET 泄露
+
+- 打包模式下 `electron/main.js` 在首次启动时生成 64 字节随机密钥，持久化到 `userData/jwt-secret`（权限 0600），后续启动复用。
+- `backend/.env` 中的 `JWT_SECRET` 在打包模式下被忽略，避免密钥随安装包分发。
+
 ---
 
 ## 8. 相关文件
 
 - `frontend/vercel.json` - Vercel 配置（构建命令 / rewrites，含 `/api` 代理）
-- `backend/src/config/env.ts` - 后端环境变量读取
+- `backend/src/config/env.ts` - 后端环境变量读取（`FRONTEND_URL` 逗号分隔白名单）
+- `backend/src/middleware/rate-limit.middleware.ts` - 登录/注册 IP 速率限制
 - `frontend/src/api.ts` - 前端 API 客户端配置（baseURL、ngrok 请求头）
+- `electron/main.js` - Electron 主进程（打包模式下 JWT_SECRET 运行时生成）
 - `.github/workflows/ci.yml` - CI 配置（backend + frontend 两个 job）

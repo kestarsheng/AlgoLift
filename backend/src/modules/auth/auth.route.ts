@@ -1,6 +1,7 @@
 // 定义用户注册、登录和当前用户查询路由及 Swagger 文档。
 import { Router } from 'express';
 import { requireAuth } from '../../middleware/auth.middleware';
+import { loginRateLimiter, registerRateLimiter } from '../../middleware/rate-limit.middleware';
 import { currentUser, loginUser, registerUser } from './auth.controller';
 
 export const authRouter = Router();
@@ -14,7 +15,7 @@ export const authRouter = Router();
  *       content: { application/json: { schema: { $ref: '#/components/schemas/RegisterRequest' } } }
  *     responses: { 201: { description: Registered }, 400: { description: Invalid payload }, 409: { description: Email exists } }
  */
-authRouter.post('/auth/register', registerUser);
+authRouter.post('/auth/register', registerRateLimiter, registerUser);
 
 /** @swagger
  * /auth/login:
@@ -25,7 +26,7 @@ authRouter.post('/auth/register', registerUser);
  *       content: { application/json: { schema: { $ref: '#/components/schemas/LoginRequest' } } }
  *     responses: { 200: { description: Logged in }, 401: { description: Invalid credentials } }
  */
-authRouter.post('/auth/login', loginUser);
+authRouter.post('/auth/login', loginRateLimiter, loginUser);
 
 /** @swagger
  * /auth/me:

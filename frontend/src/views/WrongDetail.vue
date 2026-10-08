@@ -159,10 +159,10 @@ onMounted(async () => {
               <option value="HARD">困难</option>
             </select>
           </label>
-          <label class="block text-[15px] text-[var(--color-text-secondary)]">
-            错因复盘
+          <div class="block text-[15px] text-[var(--color-text-secondary)]">
+            <span>错因复盘</span>
             <RichTextEditor v-model="form.review" class="mt-1" />
-          </label>
+          </div>
           <fieldset class="space-y-2">
             <legend class="text-[15px] font-semibold text-[var(--color-text-secondary)]">题解链接</legend>
             <div v-for="(link, index) in form.links" :key="index" class="flex flex-wrap gap-2">

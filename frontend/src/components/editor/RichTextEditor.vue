@@ -36,6 +36,12 @@ const editor = new Editor({
   content: props.modelValue,
   onUpdate: () => emit('update:modelValue', editor.storage.markdown.getMarkdown()),
   onTransaction: () => { tick.value++; updateCodeBlockLabels(); },
+
+  onBlur: () => {
+    if (editor.state.storedMarks?.length) {
+      editor.view.dispatch(editor.state.tr.setStoredMarks(null));
+    }
+  },
   editorProps: {
     handlePaste: (_view, event) => handlePaste(null, event),
     handleDrop: (_view, event, _pos) => handleDrop(null, event, 0),
@@ -53,14 +59,31 @@ const updateCodeBlockLabels = (): void => {
   });
 };
 
+const moveCaretToContentEnd = (): void => {
+  const size = editor.state.doc.content.size;
+  if (size > 0) editor.commands.setTextSelection({ from: size, to: size });
+};
+
 watch(() => props.modelValue, (value: string) => {
-  if (editor.storage.markdown.getMarkdown() !== value) { editor.commands.setContent(value || '', { emitUpdate: false }); void nextTick(() => updateCodeBlockLabels()); }
+  if (editor.storage.markdown.getMarkdown() !== value) {
+    editor.commands.setContent(value || '', { emitUpdate: false });
+    moveCaretToContentEnd();
+    void nextTick(() => updateCodeBlockLabels());
+  }
 });
 
 onBeforeUnmount(() => editor.destroy());
-onMounted(() => { void nextTick(() => updateCodeBlockLabels()); });
+onMounted(() => {
+  moveCaretToContentEnd();
+  void nextTick(() => updateCodeBlockLabels());
+
+});
 
 const run = (command: () => void): void => command();
+
+const onToolbarMousedown = (e: MouseEvent): void => {
+  if ((e.target as HTMLElement).closest('button')) e.preventDefault();
+};
 
 const setLink = (): void => {
   const previous = editor.getAttributes('link').href as string | undefined;
@@ -156,13 +179,13 @@ const insertTable = (): void => {
   editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
 };
 
-const btn = 'inline-flex h-[30px] w-[30px] items-center justify-center rounded-[3px] text-[15px] font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-hover)] hover:text-[var(--color-text)]';
+const btn = 'inline-flex h-[30px] w-[30px] items-center justify-center rounded-[3px] text-[15px] font-medium text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text)]';
 const btnActive = 'bg-[var(--color-accent-light)] text-[var(--color-accent)]';
 </script>
 
 <template>
   <div class="overflow-hidden rounded-[3px] border border-[var(--color-border)] bg-[var(--color-surface)]">
-    <div class="flex flex-wrap items-center gap-1 border-b border-[var(--color-border)] px-2 py-1.5" :data-tick="tick" @click.stop>
+    <div class="flex flex-wrap items-center gap-1 border-b border-[var(--color-border)] px-2 py-1.5" :data-tick="tick" @click.stop @mousedown="onToolbarMousedown">
       <button type="button" :class="[btn, editor.isActive('bold') ? btnActive : '']" title="加粗" @click="run(() => editor.chain().focus().toggleBold().run())"><span class="font-bold">B</span></button>
       <button type="button" :class="[btn, editor.isActive('italic') ? btnActive : '']" title="斜体" @click="run(() => editor.chain().focus().toggleItalic().run())"><span class="italic font-serif">I</span></button>
       <span class="mx-0.5 h-4 w-px bg-[var(--color-border)]" />
