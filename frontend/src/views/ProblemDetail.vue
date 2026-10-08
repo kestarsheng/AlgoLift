@@ -135,10 +135,10 @@ onMounted(load);
               <option value="HARD">困难</option>
             </select>
           </label>
-          <label class="block text-[15px] text-[var(--color-text-secondary)]">
-            内部笔记
+          <div class="block text-[15px] text-[var(--color-text-secondary)]">
+            <span>内部笔记</span>
             <RichTextEditor v-model="form.internalNote" class="mt-1" />
-          </label>
+          </div>
           <p v-if="problem.saveError" role="alert" class="text-sm text-[var(--danger)]">{{ problem.saveError }}</p>
           <div class="flex justify-end gap-3">
             <button type="button" class="rounded-[3px] border border-[var(--color-border)] px-4 py-2 text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-hover)]" @click="editOpen = false">取消</button>
