@@ -10,6 +10,7 @@
     "build": "tsc -b && vite build",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "version:sync": "node scripts/sync-version.mjs",
     "lint": "eslint src"
   },
   "dependencies": {
