@@ -54,6 +54,7 @@ const navigation = [
 ];
 const activePath = computed(() => route.path === '/dashboard' ? '/dashboard' : route.path.startsWith('/categories') || route.path.startsWith('/problems') ? '/categories' : route.path.startsWith('/notes') ? '/notes' : route.path.startsWith('/todos') ? '/todos' : route.path.startsWith('/progress') ? '/progress' : '/wrongs');
 const userInitial = computed(() => (auth.user?.displayName || auth.user?.email || 'U').charAt(0).toUpperCase());
+const versionBadge = computed(() => { const v = import.meta.env.VITE_APP_VERSION?.trim(); return v ? `v${v}` : 'dev'; });
 </script>
 <template>
   <div v-if="auth.isAuthenticated" class="min-h-screen lg:grid lg:grid-cols-[232px_1fr]">
@@ -96,7 +97,7 @@ const userInitial = computed(() => (auth.user?.displayName || auth.user?.email |
       <header class="sticky top-0 z-30 flex h-[50px] items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface-topbar)] px-3 backdrop-blur lg:px-[22px]">
         <div class="flex items-center gap-2.5">
           <span class="text-lg font-semibold tracking-tight text-[var(--color-text)]">AlgoLift</span>
-          <span class="rounded-[3px] bg-[var(--color-hover)] px-2 py-px text-xs font-semibold text-[var(--color-text-muted)]">v0.2</span>
+          <span class="rounded-[3px] bg-[var(--color-hover)] px-2 py-px text-xs font-semibold text-[var(--color-text-muted)]">{{ versionBadge }}</span>
         </div>
         <div class="flex items-center gap-1">
           <div class="relative">
