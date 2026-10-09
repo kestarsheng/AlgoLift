@@ -246,6 +246,71 @@ AI 使用 `gh` CLI 完成以下操作，不需要用户手动：
 
 **与 1.2 / 1.4 中 `release/x.x.x` 分支的关系**：`release/x.x.x` 分支目前**未实际使用**。已有的两次发布（`v0.1.0` 对应 PR #40、`v0.1.1` 对应 PR #43）都是 `develop` 直接合到 `main` 后打 tag，即上面的 5 步流程。1.4 的 release 分支流程可作为将来需要“发布前冻结”时的备选。
 
+### 1.13 正式版本发布完整流程（含版本号自动同步）
+
+本节是 1.12 的端到端实操清单，**每次正式发版必须逐条执行**。版本号遵循 1.7 语义化版本，tag 格式 `vX.Y.Z`。
+
+#### 完整步骤
+
+**一、代码改完 → 合入 develop**
+
+1. 提交到 `develop`（或走功能分支→PR→合并，见 1.9）。
+2. `develop` CI 自动跑（backend + frontend job），必须全绿。
+
+**二、develop → main 发布 PR**
+
+3. `gh pr create --base main --head develop --title "release: <描述>" --body "<描述>"`
+4. `gh pr checks <PR号> --watch`，等 CI 全绿。
+5. `gh pr merge <PR号> --merge`（**不加** `--delete-branch`，`develop` 是长期分支）。
+   - 合并后 Vercel 自动触发 Production 部署，但此时徽标可能仍显示旧版本号（tag 尚未打）。
+
+**三、打 tag + 同步版本号**
+
+6. 在 `main` 上打 tag 并推送：
+
+       git checkout main && git pull origin main
+       git tag -a vX.Y.Z -m "<描述>" && git push origin vX.Y.Z
+
+7. 自动同步版本号到 env 文件并合入 `main`：
+
+       git checkout develop && git pull origin develop
+       cd frontend && npm run version:sync    # 从最新 tag 写回 .env.development/.env.production
+       cd ..
+       git add frontend/.env.development frontend/.env.production
+       git commit -m "chore: sync app version to vX.Y.Z" && git push origin develop
+       gh pr create --base main --head develop --title "chore: sync app version to vX.Y.Z" --body "..."
+       gh pr checks <PR号> --watch && gh pr merge <PR号> --merge
+
+   - 合并后 Vercel 再次自动部署，徽标显示 `vX.Y.Z` ✅。
+
+**四、后端（本地 + ngrok，当前架构）**
+
+8. 后端无需部署——跑在开发者本机 `localhost:3000`，经 `ngrok http 3000` 暴露公网。
+9. 若 ngrok 重启导致地址变化：更新 Vercel 的 `BACKEND_ORIGIN`（或 `VITE_API_BASE_URL`）环境变量 → Vercel 重新部署。
+10. 数据库 Neon 云端，无需操作（免费层约 5 分钟无连接会休眠，首次访问可能需等几秒唤醒）。
+
+**五、验证**
+
+11. 访问 `https://algo-lift.vercel.app` 确认：
+    - [ ] 顶部徽标显示 `vX.Y.Z`（新版本号）
+    - [ ] 登录、数据加载等核心功能正常
+    - [ ] 后端连通（ngrok 隧道存活，`<后端地址>/api/health` 返回 ok）
+
+#### 版本号自动同步机制
+
+- **`frontend/scripts/sync-version.mjs`**：从最新 git tag（按版本号排序 `git tag --sort=-v:refname`，**非** `git describe`——tag 打在 main 线上，develop 回溯可达的最近 tag 会返回陈旧版本）去 `v` 前缀，幂等写回 `.env.development` / `.env.production`。暴露为 `npm run version:sync`。
+- **CI 预览构建**：`.github/workflows/ci.yml` frontend job checkout `fetch-depth: 0`，build 前从最新 tag 覆写 `VITE_APP_VERSION`——预览部署徽标恒等于最新 tag。
+- **生产发布（Vercel）**：Vercel 浅克隆无 git tags，构建只能读仓库内 env 文件，故步骤 7 必须把 `npm run version:sync` 的改动随提交入库。
+- **AppShell 徽标**：`import.meta.env.VITE_APP_VERSION` 构建期注入，显示 `v{version}`，未配置时回落 `dev`。
+
+#### 关键约束
+
+- 禁止直接 push `main`，只走 PR（见 1.12）。
+- `main` 合并由用户手动触发，AI 不自动合（见 1.9.1）。
+- tag 打在 `main` 上，格式 `vX.Y.Z`（带 v 前缀，见 1.7）。
+- 依赖版本精确锁定（无 `^` 前缀），lockfile 成对提交（见 3.7）。
+- 步骤 6（打 tag）必须先于步骤 7（version:sync），否则脚本取到的是上一个 tag。
+
 ---
 
 ## 二、.gitignore 规范
