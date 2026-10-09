@@ -67,6 +67,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
@@ -80,6 +82,18 @@ jobs:
 
       - name: Audit (high severity, non-blocking)
         run: npm audit --audit-level=high || true
+
+      - name: Sync app version from latest git tag
+        run: |
+          VITE_TAG="$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)"
+          if [ -n "$VITE_TAG" ]; then
+            VITE_APP_VERSION="$(printf '%s' "$VITE_TAG" | sed 's/^v//')"
+            printf 'VITE_APP_VERSION=%s' "$VITE_APP_VERSION" > .env.production
+            printf 'VITE_APP_VERSION=%s' "$VITE_APP_VERSION" > .env.development
+            echo "synced app version to $VITE_APP_VERSION"
+          else
+            echo "no semver git tag found, keeping committed VITE_APP_VERSION"
+          fi
 
       - name: Build
         run: npm run build
