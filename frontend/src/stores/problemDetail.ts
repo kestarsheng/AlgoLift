@@ -1,9 +1,9 @@
 // Pinia store for the problem detail page (metadata, categories, linked notes).
 import { defineStore } from 'pinia';
 import { api } from '../api';
-import type { Category, Difficulty, Note } from '../types';
+import type { Difficulty, Note, ProblemDetail } from '../types';
 
-export interface ProblemDetail { id: string; title: string; difficulty: Difficulty; internalNote: string | null; createdAt?: string; categories: Category[]; notes: Note[] }
+export type { ProblemDetail } from '../types';
 interface ProblemResponse { data: ProblemDetail }
 interface ProblemNotesResponse { data: { problemId: string; notes: Note[] } }
 

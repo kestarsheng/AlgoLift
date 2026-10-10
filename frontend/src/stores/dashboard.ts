@@ -2,9 +2,8 @@
 import { defineStore } from 'pinia';
 import { api } from '../api';
 import { todayStr } from '../utils/date';
-import type { Category, DashboardStats, NoteListItem, Pagination, Progress, ProblemListItem, Todo, WrongListItem } from '../types';
+import type { Category, DashboardStats, NoteListItem, Page, Pagination, Progress, ProblemListItem, Todo, WrongListItem } from '../types';
 
-interface Page<T> { data: T[]; pagination: Pagination }
 interface Module<T> { data: T; error: string }
 const empty = <T>(): Page<T> => ({ data: [], pagination: { page: 1, pageSize: 1, total: 0, totalPages: 0 } });
 const message = (error: unknown, fallback: string): string => error instanceof Error ? error.message : fallback;
@@ -34,7 +33,7 @@ export const useDashboardStore = defineStore('dashboard', {
     latestProgress: (state): Progress | null => state.progress.data.data[0] ?? null,
     hasErrors: (state): boolean => [state.categories, state.problems, state.wrongs, state.notes, state.todos, state.progress, state.stats].some((item) => Boolean(item.error)),
     heatmapDays: (state): HeatmapDay[] => buildHeatmap(state.stats.data.dailyPractice),
-    heatmapData: (state): HeatmapDay[] => buildHeatmap(state.stats.data.dailyPractice),
+    heatmapData(): HeatmapDay[] { return this.heatmapDays; },
     totalProblems: (state): number => state.stats.data.totalProblems ?? 0,
     completedProblems: (state): number => state.stats.data.completedProblems ?? 0,
     accuracy: (state): number => state.stats.data.accuracy ?? 0,
