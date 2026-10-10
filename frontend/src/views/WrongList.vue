@@ -34,7 +34,7 @@ const rangeLabel = computed(() => {
   const to = Math.min(page * pageSize, total);
   return `显示第 ${from}–${to} / 共 ${total} 条`;
 });
-const linkCount = (item: WrongListItem): number => Array.isArray(item.solutionLinks) ? item.solutionLinks.length : 0;
+const linkCount = (item: WrongListItem): number => item.solutionLinks?.length ?? 0;
 function relativeTime(iso: string | undefined): string {
   if (!iso) return '—';
   const then = new Date(iso);

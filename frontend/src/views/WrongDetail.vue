@@ -29,7 +29,7 @@ const DIFFICULTY_TAG: Record<Difficulty, string> = {
   HARD: 'bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] text-[var(--danger)]',
 };
 
-const links = computed<SolutionLink[]>(() => (Array.isArray(wrong.value?.solutionLinks) ? (wrong.value.solutionLinks as SolutionLink[]) : []));
+const links = computed<SolutionLink[]>(() => wrong.value?.solutionLinks ?? []);
 
 function edit(): void {
   if (!wrong.value) return;
