@@ -36,7 +36,7 @@ beforeEach(() => {
   mocked.post.mockReset().mockResolvedValue({ data: { data: { id: 'c3', name: '树', problemCount: 0 } } });
   mocked.patch.mockReset().mockResolvedValue({ data: { data: { id: 'c1', name: '数组进阶', problemCount: 12 } } });
   mocked.delete.mockReset().mockResolvedValue({ data: {} });
-  vi.stubGlobal('confirm', vi.fn(() => true));
+
 });
 
 describe('CategoryBoard', () => {
