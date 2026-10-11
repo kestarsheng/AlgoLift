@@ -174,11 +174,12 @@ postgresql://username:password@ep-xxx.c-xxx.aws.neon.tech/neondb?sslmode=require
 
 ### 5.1 例行发布（前端改动）
 
-前端发布通过 Git 工作流触发（见 `AI_SOP.md` 1.12）：
+前端发布通过 Git 工作流触发（完整端到端流程见 `AI_SOP.md` 1.13）：
 
 1. 合并到 `main`（用户手动合并 `develop → main` 的 PR）。
 2. Vercel 自动触发 **Production** 部署（`main` 跟踪生产环境）。
 3. 在 `main` 上打 tag：`vX.Y.Z`。
+4. **同步版本号**：`cd frontend && npm run version:sync`（从最新 tag 写回 `.env.development`/`.env.production`），提交 env 改动并合入 `main`，Vercel 重新部署后徽标显示新版本号。
 
 ### 5.2 后端变更（本地 + ngrok 场景）
 
@@ -191,6 +192,7 @@ postgresql://username:password@ep-xxx.c-xxx.aws.neon.tech/neondb?sslmode=require
 
 ### 5.3 验证检查清单
 
+- [ ] 顶部徽标显示正确版本号 `vX.Y.Z`
 - [ ] 前端页面正常加载
 - [ ] 后端健康检查 `<后端地址>/api/health` 返回正常
 - [ ] 用户可以注册/登录

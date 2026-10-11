@@ -4,6 +4,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useCategoryStore } from '../stores/category';
 import CategoryCard from '../components/category/CategoryCard.vue';
 import CategoryModal from '../components/category/CategoryModal.vue';
+import ConfirmDialog from '../components/ConfirmDialog.vue';
 import type { Category } from '../types';
 
 const store = useCategoryStore();
@@ -97,15 +98,8 @@ onMounted(() => store.fetch(true));
 
     <CategoryModal :open="modalOpen" :editing="editing" :saving="store.saving" :error="store.saveError" @submit="submitModal" @close="modalOpen = false" />
 
-    <div v-if="confirming" class="fixed inset-0 z-50 grid place-items-center bg-black/30 p-4" @click.self="confirming = null">
-      <div class="w-full max-w-sm space-y-4 rounded-[3px] border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
-        <h3 class="text-xl font-semibold text-[var(--color-text)] [font-family:var(--font-heading)]">删除分类</h3>
-        <p class="text-[15px] leading-relaxed text-[var(--color-text-secondary)]">确认删除「{{ confirming.name }}」吗？该分类下的 {{ confirming.problemCount }} 道题目不会被删除，只会解除分类关联。此操作不可撤销。</p>
-        <div class="flex justify-end gap-3">
-          <button class="rounded-[3px] border border-[var(--color-border)] px-4 py-2 text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-hover)]" @click="confirming = null">取消</button>
-          <button :disabled="store.deleting" class="rounded-[3px] bg-[var(--danger)] px-4 py-2 font-medium text-white transition-opacity disabled:opacity-50" @click="confirmRemove">{{ store.deleting ? '删除中…' : '确认删除' }}</button>
-        </div>
-      </div>
-    </div>
+    <ConfirmDialog :open="!!confirming" title="删除分类" :loading="store.deleting" @cancel="confirming = null" @confirm="confirmRemove">
+      <p class="text-[15px] leading-relaxed text-[var(--color-text-secondary)]">确认删除「{{ confirming.name }}」吗？该分类下的 {{ confirming.problemCount }} 道题目不会被删除，只会解除分类关联。此操作不可撤销。</p>
+    </ConfirmDialog>
   </section>
 </template>

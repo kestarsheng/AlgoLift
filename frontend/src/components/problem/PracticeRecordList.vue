@@ -3,6 +3,7 @@
 import { reactive, ref } from 'vue';
 import { usePracticeRecordStore } from '../../stores/practiceRecord';
 import { formatDate } from '../../utils/date';
+import ConfirmDialog from '../ConfirmDialog.vue';
 
 const store = usePracticeRecordStore();
 const open = ref(false);
@@ -41,7 +42,8 @@ const saveEdit = async (recordId: string): Promise<void> => {
   }
 };
 const cancelEdit = (): void => { editingId.value = null; store.error = ''; };
-const remove = async (recordId: string): Promise<void> => { if (window.confirm('确认删除这条练习记录吗？')) await store.remove(recordId); };
+const confirmingId = ref<string | null>(null);
+const remove = async (): Promise<void> => { if (!confirmingId.value) return; await store.remove(confirmingId.value); confirmingId.value = null; };
 </script>
 
 <template>
@@ -103,10 +105,11 @@ const remove = async (recordId: string): Promise<void> => { if (window.confirm('
           <div class="col-span-3 flex min-w-0 items-center gap-2 sm:col-span-1">
             <span class="min-w-0 flex-1 truncate text-[15px] text-[var(--color-text-secondary)]">{{ record.remark || '—' }}</span>
             <button class="shrink-0 text-[13px] text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-accent)]" @click="startEdit(record)">编辑</button>
-            <button class="shrink-0 text-[13px] text-[var(--color-text-muted)] transition-colors hover:text-[var(--danger)]" @click="remove(record.id)">删除</button>
+            <button class="shrink-0 text-[13px] text-[var(--color-text-muted)] transition-colors hover:text-[var(--danger)]" @click="confirmingId = record.id">删除</button>
           </div>
         </div>
       </div>
     </div>
   </div>
+  <ConfirmDialog :open="!!confirmingId" title="删除练习记录" :message="'确认删除这条练习记录吗？此操作不可撤销。'" :loading="store.saving" @cancel="confirmingId = null" @confirm="remove" />
 </template>

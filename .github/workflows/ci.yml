@@ -1,4 +1,4 @@
-# 在主分支和开发分支的 push/PR 上执行后端与前端构建和测试。
+# 在主分支和开发分支的 push/PR 上执行后端与前端构建、测试与覆盖率检查。
 name: CI
 
 on:
@@ -34,15 +34,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: backend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Audit (high severity, non-blocking)
+        run: npm audit --audit-level=high || true
 
       - name: Generate Prisma Client
         run: npx prisma generate
@@ -53,8 +56,8 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Test
-        run: npm test
+      - name: Test with coverage
+        run: npm run test:coverage
 
   frontend:
     runs-on: ubuntu-latest
@@ -64,6 +67,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
@@ -75,8 +80,100 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Audit (high severity, non-blocking)
+        run: npm audit --audit-level=high || true
+
+      - name: Sync app version from latest git tag
+        run: |
+          VITE_TAG="$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)"
+          if [ -n "$VITE_TAG" ]; then
+            VITE_APP_VERSION="$(printf '%s' "$VITE_TAG" | sed 's/^v//')"
+            printf 'VITE_APP_VERSION=%s' "$VITE_APP_VERSION" > .env.production
+            printf 'VITE_APP_VERSION=%s' "$VITE_APP_VERSION" > .env.development
+            echo "synced app version to $VITE_APP_VERSION"
+          else
+            echo "no semver git tag found, keeping committed VITE_APP_VERSION"
+          fi
+
       - name: Build
         run: npm run build
 
-      - name: Test
-        run: npm test
+      - name: Test with coverage
+        run: npm run test:coverage
+
+  electron:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            backend/package-lock.json
+            electron/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Install electron dependencies
+        run: npm ci
+        working-directory: electron
+
+      - name: Sync app version for electron mode
+        shell: bash
+        run: |
+          VITE_TAG="$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)"
+          if [ -n "$VITE_TAG" ]; then
+            VITE_APP_VERSION="$(printf '%s' "$VITE_TAG" | sed 's/^v//')"
+            printf 'VITE_APP_VERSION=%s' "$VITE_APP_VERSION" > frontend/.env.electron
+            echo "synced app version to $VITE_APP_VERSION"
+          else
+            echo "no semver git tag found, skipping version sync"
+          fi
+
+      - name: Verify electron version matches latest git tag
+        shell: bash
+        run: |
+          LATEST_TAG="$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1 | sed 's/^v//')"
+          PKG_VERSION="$(node -p "require('./electron/package.json').version")"
+          echo "Latest tag version: $LATEST_TAG"
+          echo "electron/package.json version: $PKG_VERSION"
+          if [ "$LATEST_TAG" != "$PKG_VERSION" ]; then
+            echo "ERROR: Version mismatch! electron/package.json ($PKG_VERSION) != latest tag ($LATEST_TAG)"
+            exit 1
+          fi
+          echo "Version check passed"
+
+      - name: Create dummy backend/.env for build
+        shell: bash
+        run: |
+          if [ ! -f backend/.env ]; then
+            printf 'DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy\nJWT_SECRET=ci-build-dummy-secret\n' > backend/.env
+          fi
+
+      - name: Build and package Electron app
+        run: npm run dist
+        working-directory: electron
+
+      - name: Verify NSIS installer artifact
+        shell: bash
+        run: |
+          ARTIFACT="$(find electron/dist -name '*.exe' -type f | head -1)"
+          if [ -z "$ARTIFACT" ]; then
+            echo "ERROR: No .exe installer found in electron/dist/"
+            exit 1
+          fi
+          echo "Found installer: $ARTIFACT"

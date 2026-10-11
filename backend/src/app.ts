@@ -19,7 +19,9 @@ import { progressRouter } from './modules/progress/progress.route';
 import { wrongRouter } from './modules/wrong/wrong.route';
 import { wrongNotesRouter } from './modules/wrong-notes/wrong-notes.route';
 import { statsRouter } from './modules/stats/stats.route';
+import { searchRouter } from './modules/search/search.route';
 import { uploadsRouter } from './modules/uploads/uploads.route';
+import { startImageCleanupScheduler } from './lib/image-cleanup';
 
 export const app = express();
 
@@ -51,6 +53,7 @@ app.use('/api', progressRouter);
 app.use('/api', wrongRouter);
 app.use('/api', wrongNotesRouter);
 app.use('/api', statsRouter);
+app.use('/api', searchRouter);
 app.use('/api', uploadsRouter);
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
@@ -59,4 +62,5 @@ if (require.main === module) {
   app.listen(config.port, () => {
     console.log(`AlgoLift backend listening on port ${config.port}`);
   });
+  startImageCleanupScheduler();
 }

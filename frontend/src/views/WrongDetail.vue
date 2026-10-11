@@ -8,6 +8,7 @@ import { WRONG_CATEGORY_PRESETS } from '../constants';
 import type { Difficulty, SolutionLink, Wrong } from '../types';
 import RichTextEditor from '../components/editor/RichTextEditor.vue';
 import MarkdownRenderer from '../components/editor/MarkdownRenderer.vue';
+import ConfirmDialog from '../components/ConfirmDialog.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -28,7 +29,7 @@ const DIFFICULTY_TAG: Record<Difficulty, string> = {
   HARD: 'bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] text-[var(--danger)]',
 };
 
-const links = computed<SolutionLink[]>(() => (Array.isArray(wrong.value?.solutionLinks) ? (wrong.value.solutionLinks as SolutionLink[]) : []));
+const links = computed<SolutionLink[]>(() => wrong.value?.solutionLinks ?? []);
 
 function edit(): void {
   if (!wrong.value) return;
@@ -184,17 +185,10 @@ onMounted(async () => {
         </form>
       </div>
 
-      <div v-if="confirming" class="fixed inset-0 z-50 grid place-items-center bg-black/30 p-4" @click.self="confirming = false">
-        <div class="w-full max-w-sm space-y-4 rounded-[3px] border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
-          <h3 class="text-xl font-semibold text-[var(--color-text)] [font-family:var(--font-heading)]">删除错题</h3>
-          <p class="text-[15px] leading-relaxed text-[var(--color-text-secondary)]">确认删除「{{ wrong.title }}」吗？此操作不可撤销。</p>
-          <p v-if="wrongs.deleteError" role="alert" class="text-sm text-[var(--danger)]">{{ wrongs.deleteError }}</p>
-          <div class="flex justify-end gap-3">
-            <button type="button" class="rounded-[3px] border border-[var(--color-border)] px-4 py-2 text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-hover)]" @click="confirming = false">取消</button>
-            <button :disabled="wrongs.deleting" class="rounded-[3px] bg-[var(--danger)] px-4 py-2 font-medium text-white transition-opacity disabled:opacity-50" @click="remove">{{ wrongs.deleting ? '删除中…' : '确认删除' }}</button>
-          </div>
-        </div>
-      </div>
+      <ConfirmDialog :open="confirming" title="删除错题" :loading="wrongs.deleting" @cancel="confirming = false" @confirm="remove">
+        <p class="text-[15px] leading-relaxed text-[var(--color-text-secondary)]">确认删除「{{ wrong.title }}」吗？此操作不可撤销。</p>
+        <p v-if="wrongs.deleteError" role="alert" class="text-sm text-[var(--danger)]">{{ wrongs.deleteError }}</p>
+      </ConfirmDialog>
     </template>
   </section>
 </template>

@@ -2,14 +2,16 @@
 export type Difficulty = 'EASY' | 'MEDIUM' | 'HARD';
 export interface SolutionLink { name: string; url: string }
 export interface User { id: string; email: string; displayName: string | null; theme: string }
-export interface Note { id: string; title: string; content: string | null; solutionLinks?: unknown; createdAt?: string; updatedAt?: string }
+export interface Note { id: string; title: string; content: string | null; solutionLinks?: SolutionLink[]; createdAt?: string; updatedAt?: string }
 export interface NoteListItem extends Note { problemCount: number; wrongCount: number }
-export interface Wrong { id: string; title: string; category?: string | null; difficulty: Difficulty; review?: string | null; solutionLinks?: unknown; createdAt?: string; updatedAt?: string }
+export interface Wrong { id: string; title: string; category?: string | null; difficulty: Difficulty; review?: string | null; solutionLinks?: SolutionLink[]; createdAt?: string; updatedAt?: string }
 export interface WrongListItem extends Wrong { noteCount: number }
 export interface Pagination { page: number; pageSize: number; total: number; totalPages: number }
+export interface Page<T> { data: T[]; pagination: Pagination }
 export interface WrongNotesResponse { data: { wrongId: string; notes: Note[] } }
 export interface Category { id: string; name: string; problemCount: number }
 export interface ProblemListItem { id: string; title: string; difficulty: Difficulty; practiceCount: number; noteCount: number; lastPracticedAt: string | null }
+export interface ProblemDetail { id: string; title: string; difficulty: Difficulty; internalNote: string | null; createdAt?: string; categories: Category[]; notes: Note[] }
 export interface PracticeRecord { id: string; practicedAt: string; solvedFirstTry: boolean; remark: string | null }
 export interface DailyPracticeCount { date: string; count: number }
 export interface DashboardStats { difficultyCounts: Record<Difficulty, number>; dailyPractice: DailyPracticeCount[]; totalProblems: number; completedProblems: number; accuracy: number }

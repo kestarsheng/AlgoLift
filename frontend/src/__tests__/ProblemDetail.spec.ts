@@ -46,7 +46,7 @@ beforeEach(() => {
   mocked.patch.mockReset().mockResolvedValue({ data: { data: detail } });
   mocked.put.mockReset().mockResolvedValue({ data: { data: detail } });
   mocked.delete.mockReset().mockResolvedValue({ data: {} });
-  vi.stubGlobal('confirm', vi.fn(() => true));
+
 });
 
 describe('ProblemDetail', () => {

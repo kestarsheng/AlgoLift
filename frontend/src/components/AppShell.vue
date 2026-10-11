@@ -1,10 +1,11 @@
 <!-- 应用外壳：原型侧边栏（Logo+导航+用户卡+退出下拉）+ 顶部栏（标题+搜索/通知/主题/头像），所有路由共享。 -->
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { RouterLink } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { useThemeStore } from '../stores/theme';
+import { api } from '../api';
 import ThemeSwitcher from './ThemeSwitcher.vue';
 
 const route = useRoute();
@@ -17,12 +18,31 @@ const toggleUserMenu = (event: Event): void => { event.stopPropagation(); userMe
 const closeUserMenu = (): void => { userMenuOpen.value = false; };
 const logout = (): void => { userMenuOpen.value = false; auth.logout(); void router.push('/login'); };
 
+const searchOpen = ref(false);
+const searchKeyword = ref('');
+const searchLoading = ref(false);
+interface SearchResults { problems: { id: string; title: string; difficulty: string }[]; wrongs: { id: string; title: string; difficulty: string }[]; notes: { id: string; title: string }[]; todos: { id: string; title: string; status: string; priority: string }[]; }
+const searchResults = ref<SearchResults>({ problems: [], wrongs: [], notes: [], todos: [] });
+let searchTimer: ReturnType<typeof setTimeout> | undefined;
+const toggleSearch = (event: Event): void => { event.stopPropagation(); searchOpen.value = !searchOpen.value; if (!searchOpen.value) { searchKeyword.value = ''; searchResults.value = { problems: [], wrongs: [], notes: [], todos: [] }; } };
+const closeSearch = (): void => { searchOpen.value = false; searchKeyword.value = ''; searchResults.value = { problems: [], wrongs: [], notes: [], todos: [] }; };
+const runSearch = async (): Promise<void> => {
+  const q = searchKeyword.value.trim();
+  if (!q) { searchResults.value = { problems: [], wrongs: [], notes: [], todos: [] }; return; }
+  searchLoading.value = true;
+  try { const { data } = await api.get('/search', { params: { q } }); searchResults.value = data.data; } catch { searchResults.value = { problems: [], wrongs: [], notes: [], todos: [] }; } finally { searchLoading.value = false; }
+};
+watch(searchKeyword, () => { if (searchTimer) clearTimeout(searchTimer); searchTimer = setTimeout(runSearch, 300); });
+const searchResultPath = (type: string, id: string): string => type === 'problem' ? `/problems/${id}` : type === 'wrong' ? `/wrongs/${id}` : type === 'note' ? `/notes/${id}` : '/todos';
+const goToResult = (type: string, id: string): void => { closeSearch(); document.removeEventListener('click', closeSearch); void router.push(searchResultPath(type, id)); };
+
 onMounted(async () => {
   theme.init();
   if (auth.token && !auth.user) await auth.fetchCurrentUser();
   document.addEventListener('click', closeUserMenu);
+  document.addEventListener('click', closeSearch);
 });
-onUnmounted(() => { document.removeEventListener('click', closeUserMenu); });
+onUnmounted(() => { document.removeEventListener('click', closeUserMenu); document.removeEventListener('click', closeSearch); });
 
 const navigation = [
   { label: '数据概览', path: '/dashboard', icon: '<rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/>' },
@@ -34,6 +54,7 @@ const navigation = [
 ];
 const activePath = computed(() => route.path === '/dashboard' ? '/dashboard' : route.path.startsWith('/categories') || route.path.startsWith('/problems') ? '/categories' : route.path.startsWith('/notes') ? '/notes' : route.path.startsWith('/todos') ? '/todos' : route.path.startsWith('/progress') ? '/progress' : '/wrongs');
 const userInitial = computed(() => (auth.user?.displayName || auth.user?.email || 'U').charAt(0).toUpperCase());
+const versionBadge = computed(() => { const v = import.meta.env.VITE_APP_VERSION?.trim(); return v ? `v${v}` : 'dev'; });
 </script>
 <template>
   <div v-if="auth.isAuthenticated" class="min-h-screen lg:grid lg:grid-cols-[232px_1fr]">
@@ -76,13 +97,42 @@ const userInitial = computed(() => (auth.user?.displayName || auth.user?.email |
       <header class="sticky top-0 z-30 flex h-[50px] items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface-topbar)] px-3 backdrop-blur lg:px-[22px]">
         <div class="flex items-center gap-2.5">
           <span class="text-lg font-semibold tracking-tight text-[var(--color-text)]">AlgoLift</span>
-          <span class="rounded-[3px] bg-[var(--color-hover)] px-2 py-px text-xs font-semibold text-[var(--color-text-muted)]">v0.2</span>
+          <span class="rounded-[3px] bg-[var(--color-hover)] px-2 py-px text-xs font-semibold text-[var(--color-text-muted)]">{{ versionBadge }}</span>
         </div>
         <div class="flex items-center gap-1">
-          <button class="flex h-8 w-8 items-center justify-center rounded-[3px] text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-hover)]" title="搜索">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          </button>
-          <button class="flex h-8 w-8 items-center justify-center rounded-[3px] text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-hover)]" title="通知">
+          <div class="relative">
+            <button class="flex h-8 w-8 items-center justify-center rounded-[3px] text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-hover)]" title="搜索" @click="toggleSearch">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+            <div v-if="searchOpen" class="absolute right-0 top-full z-50 mt-1 w-[340px] rounded-[4px] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg" @click.stop>
+              <div class="border-b border-[var(--color-border)] p-2.5">
+                <input v-model="searchKeyword" type="text" placeholder="搜索题目、错题、笔记、待办..." class="w-full rounded-[3px] border border-[var(--color-border)] bg-[var(--color-bg)] px-2.5 py-1.5 text-sm text-[var(--color-text)] outline-none focus:border-[var(--color-accent)]" autofocus />
+              </div>
+              <div class="max-h-[360px] overflow-y-auto p-1.5">
+                <div v-if="searchLoading" class="px-2 py-3 text-center text-sm text-[var(--color-text-muted)]">搜索中...</div>
+                <div v-else-if="!searchResults.problems.length && !searchResults.wrongs.length && !searchResults.notes.length && !searchResults.todos.length" class="px-2 py-3 text-center text-sm text-[var(--color-text-muted)]">{{ searchKeyword.trim() ? '无匹配结果' : '输入关键词搜索' }}</div>
+                <template v-else>
+                  <div v-if="searchResults.problems.length" class="mb-1.5">
+                    <div class="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">题目</div>
+                    <button v-for="item in searchResults.problems" :key="item.id" class="flex w-full items-center justify-between rounded-[3px] px-2 py-1.5 text-left text-sm text-[var(--color-text)] transition-colors hover:bg-[var(--color-hover)]" @click="goToResult('problem', item.id)"><span class="truncate">{{ item.title }}</span><span class="ml-2 shrink-0 text-xs text-[var(--color-text-muted)]">{{ item.difficulty }}</span></button>
+                  </div>
+                  <div v-if="searchResults.wrongs.length" class="mb-1.5">
+                    <div class="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">错题</div>
+                    <button v-for="item in searchResults.wrongs" :key="item.id" class="flex w-full items-center justify-between rounded-[3px] px-2 py-1.5 text-left text-sm text-[var(--color-text)] transition-colors hover:bg-[var(--color-hover)]" @click="goToResult('wrong', item.id)"><span class="truncate">{{ item.title }}</span><span class="ml-2 shrink-0 text-xs text-[var(--color-text-muted)]">{{ item.difficulty }}</span></button>
+                  </div>
+                  <div v-if="searchResults.notes.length" class="mb-1.5">
+                    <div class="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">笔记</div>
+                    <button v-for="item in searchResults.notes" :key="item.id" class="flex w-full rounded-[3px] px-2 py-1.5 text-left text-sm text-[var(--color-text)] transition-colors hover:bg-[var(--color-hover)]" @click="goToResult('note', item.id)">{{ item.title }}</button>
+                  </div>
+                  <div v-if="searchResults.todos.length">
+                    <div class="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">待办</div>
+                    <button v-for="item in searchResults.todos" :key="item.id" class="flex w-full rounded-[3px] px-2 py-1.5 text-left text-sm text-[var(--color-text)] transition-colors hover:bg-[var(--color-hover)]" @click="goToResult('todo', item.id)">{{ item.title }}</button>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+          <button class="flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-[3px] text-[var(--color-text-muted)] opacity-50" title="暂未开放" disabled>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M6 8a6 6 0 0 1 12 0c0 7 4 9 4 9H2s4-2 4-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
           </button>
           <ThemeSwitcher />

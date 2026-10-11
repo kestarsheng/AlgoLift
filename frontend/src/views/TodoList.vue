@@ -5,6 +5,7 @@ import { useTodoStore } from '../stores/todo';
 import PaginationNav from '../components/PaginationNav.vue';
 import StateBox from '../components/StateBox.vue';
 import Modal from '../components/Modal.vue';
+import ConfirmDialog from '../components/ConfirmDialog.vue';
 import { formatDate } from '../utils/date';
 import type { Todo, TodoPriority, TodoStatus } from '../types';
 
@@ -62,7 +63,8 @@ function openCreate(): void { editing.value = null; form.value = { title: '', du
 async function openEdit(todo: Todo): Promise<void> { const current = await store.get(todo.id); if (current) { editing.value = current; form.value = { title: current.title, dueDate: current.dueDate?.slice(0, 10) ?? '', priority: current.priority, status: current.status, remark: current.remark ?? '' }; formOpen.value = true; } }
 async function save(): Promise<void> { if (!form.value.title.trim() || store.saving) return; const input = { ...form.value, title: form.value.title.trim(), dueDate: form.value.dueDate || undefined, remark: form.value.remark || undefined }; const result = editing.value ? await store.update(editing.value.id, input) : await store.create(input); if (result) { formOpen.value = false; void store.fetchSummaries(); } }
 async function toggle(todo: Todo): Promise<void> { await store.toggle(todo); void store.fetchSummaries(); }
-async function remove(todo: Todo): Promise<void> { if (window.confirm(`确定删除“${todo.title}”吗？`)) { const ok = await store.remove(todo.id); if (ok) void store.fetchSummaries(); } }
+const confirmTarget = ref<Todo | null>(null);
+async function remove(): Promise<void> { if (!confirmTarget.value) return; const target = confirmTarget.value; const ok = await store.remove(target.id); if (ok) void store.fetchSummaries(); confirmTarget.value = null; }
 
 onMounted(() => { void store.fetch(); void store.fetchSummaries(); });
 </script>
@@ -165,7 +167,7 @@ onMounted(() => { void store.fetch(); void store.fetchSummaries(); });
             <button aria-label="编辑" class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-[2px] text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-hover)] hover:text-[var(--color-text)]" @click="openEdit(todo)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-[14px] w-[14px]"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
-            <button aria-label="删除" class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-[2px] text-[var(--color-text-muted)] transition-colors hover:bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] hover:text-[var(--danger)]" :disabled="store.deleting" @click="remove(todo)">
+            <button aria-label="删除" class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-[2px] text-[var(--color-text-muted)] transition-colors hover:bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] hover:text-[var(--danger)]" :disabled="store.deleting" @click="confirmTarget = todo">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-[14px] w-[14px]"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
             </button>
           </span>
@@ -205,5 +207,6 @@ onMounted(() => { void store.fetch(); void store.fetchSummaries(); });
         </div>
       </form>
     </Modal>
+    <ConfirmDialog :open="!!confirmTarget" title="删除待办" :message="confirmTarget ? `确定删除“${confirmTarget.title}”吗？此操作不可撤销。` : ''" :loading="store.deleting" @cancel="confirmTarget = null" @confirm="remove" />
   </section>
 </template>
