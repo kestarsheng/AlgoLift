@@ -4,6 +4,7 @@ import { prisma } from '../../config/prisma';
 import { cleanMarkdown } from '../../config/markdown';
 import { CreateProblemInput, ProblemQuery, UpdateProblemInput } from './problem.dto';
 import { ApiError, assertRecordExists, handlePrismaNotFound } from '../../lib/errors';
+import { cleanupDeletedEntityImages } from '../../lib/image-cleanup';
 
 const include = { categories: { include: { category: { select: { id: true, name: true } } } }, _count: { select: { practiceRecords: true, notes: true } }, practiceRecords: { orderBy: { practicedAt: 'desc' as const }, take: 1, select: { practicedAt: true } } } as const;
 const summary = (problem: Prisma.ProblemGetPayload<{ include: typeof include }>) => ({ id: problem.id, title: problem.title, difficulty: problem.difficulty, internalNote: problem.internalNote, categories: problem.categories.map(({ category }) => category), practiceCount: problem._count.practiceRecords, noteCount: problem._count.notes, lastPracticedAt: problem.practiceRecords[0]?.practicedAt ?? null, createdAt: problem.createdAt, updatedAt: problem.updatedAt });
@@ -27,4 +28,4 @@ export const updateProblem = async (userId: string, problemId: string, input: Up
   try { const problem = await prisma.problem.update({ where: { id: problemId, userId }, data: { ...(input.title === undefined ? {} : { title: input.title.trim() }), ...(input.difficulty === undefined ? {} : { difficulty: input.difficulty }), ...(input.internalNote === undefined ? {} : { internalNote: input.internalNote === null ? null : cleanMarkdown(input.internalNote) }) }, include }); return { data: summary(problem) }; }
   catch (error: unknown) { if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') throw new ApiError(404, 'PROBLEM_NOT_FOUND', 'Problem does not exist'); if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') throw new ApiError(409, 'PROBLEM_TITLE_EXISTS', 'Problem title already exists'); throw error; }
 };
-export const deleteProblem = async (userId: string, problemId: string): Promise<void> => { try { await prisma.problem.delete({ where: { id: problemId, userId } }); } catch (error: unknown) { handlePrismaNotFound(error, 'PROBLEM_NOT_FOUND', 'Problem does not exist'); } };
+export const deleteProblem = async (userId: string, problemId: string): Promise<void> => { const existing = assertRecordExists(await prisma.problem.findFirst({ where: { id: problemId, userId }, select: { internalNote: true } }), 'PROBLEM_NOT_FOUND', 'Problem does not exist'); try { await prisma.problem.delete({ where: { id: problemId, userId } }); } catch (error: unknown) { handlePrismaNotFound(error, 'PROBLEM_NOT_FOUND', 'Problem does not exist'); } await cleanupDeletedEntityImages(existing.internalNote); };
