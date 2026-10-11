@@ -21,6 +21,7 @@ import { wrongNotesRouter } from './modules/wrong-notes/wrong-notes.route';
 import { statsRouter } from './modules/stats/stats.route';
 import { searchRouter } from './modules/search/search.route';
 import { uploadsRouter } from './modules/uploads/uploads.route';
+import { startImageCleanupScheduler } from './lib/image-cleanup';
 
 export const app = express();
 
@@ -61,4 +62,5 @@ if (require.main === module) {
   app.listen(config.port, () => {
     console.log(`AlgoLift backend listening on port ${config.port}`);
   });
+  startImageCleanupScheduler();
 }
