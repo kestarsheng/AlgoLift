@@ -1,10 +1,17 @@
 // Electron 主进程：启动后端子进程、注册自定义协议加载前端、管理窗口生命周期。
-const { app, BrowserWindow, protocol, net } = require('electron');
+const { app, BrowserWindow, protocol, net, Menu, dialog } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
 const { pathToFileURL } = require('url');
+
+let autoUpdater = null;
+try {
+  autoUpdater = require('electron-updater').autoUpdater;
+} catch (e) {
+  console.log('[electron] electron-updater not available, auto-update disabled');
+}
 
 // 在最早期把 console.log/error 同时写入 main.log 文件，便于 GUI 模式下诊断启动问题。
 (function setupMainLog() {
@@ -50,8 +57,8 @@ const MAX_STDERR_BUFFER = 64 * 1024;
 
 let backendProcess = null;
 let mainWindow = null;
-// 收集后端 stderr，用于启动失败时在窗口里展示诊断信息。
 let backendStderrBuffer = '';
+let manualUpdateCheck = false;
 
 /** 返回前端 dist 与后端目录的路径（区分开发与打包环境）。 */
 function getPaths() {
@@ -366,6 +373,146 @@ function loadErrorPage(title, detail) {
   mainWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html));
 }
 
+/** 配置并启动自动更新（仅打包模式）。开发模式跳过所有网络请求。 */
+function setupAutoUpdater() {
+  if (!autoUpdater) {
+    console.log('[updater] electron-updater module unavailable, skipping');
+    return;
+  }
+  if (!app.isPackaged) {
+    console.log('[updater] dev mode, skipping auto-update check');
+    return;
+  }
+
+  const updateUrl = process.env.ALGOLIFT_UPDATE_URL;
+  if (updateUrl) {
+    autoUpdater.setFeedURL({ provider: 'generic', url: updateUrl });
+    console.log('[updater] feed URL overridden via ALGOLIFT_UPDATE_URL');
+  }
+
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = false;
+  autoUpdater.allowDowngrade = false;
+
+  autoUpdater.on('checking-for-update', () => {
+    console.log('[updater] checking for update...');
+  });
+  autoUpdater.on('update-available', (info) => {
+    console.log('[updater] update available:', info.version);
+    if (manualUpdateCheck && mainWindow) {
+      dialog.showMessageBox(mainWindow, {
+        type: 'info',
+        title: '发现新版本',
+        message: `发现新版本 ${info.version}`,
+        detail: '正在后台下载更新，下载完成后将提示您安装。',
+      });
+      manualUpdateCheck = false;
+    }
+  });
+  autoUpdater.on('update-not-available', (info) => {
+    console.log('[updater] up to date:', info ? info.version : 'unknown');
+    if (manualUpdateCheck && mainWindow) {
+      dialog.showMessageBox(mainWindow, {
+        type: 'info',
+        title: '检查更新',
+        message: '已是最新版本',
+        detail: `当前版本 ${app.getVersion()}`,
+      });
+      manualUpdateCheck = false;
+    }
+  });
+  autoUpdater.on('error', (err) => {
+    console.error('[updater] error:', err.message);
+    if (manualUpdateCheck && mainWindow) {
+      dialog.showMessageBox(mainWindow, {
+        type: 'error',
+        title: '检查更新失败',
+        message: '检查更新失败',
+        detail: err.message,
+      });
+      manualUpdateCheck = false;
+    }
+  });
+  autoUpdater.on('download-progress', (progress) => {
+    console.log(`[updater] download: ${progress.percent.toFixed(1)}% (${progress.transferred}/${progress.total})`);
+  });
+  autoUpdater.on('update-downloaded', (info) => {
+    console.log('[updater] update downloaded:', info.version);
+    if (!mainWindow) return;
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: '更新已就绪',
+      message: '新版本已下载完成',
+      detail: `版本 ${info.version} 已准备就绪，是否立即重启安装更新？`,
+      buttons: ['立即重启', '稍后'],
+      defaultId: 0,
+      cancelId: 1,
+    }).then((result) => {
+      if (result.response === 0) {
+        killBackend();
+        autoUpdater.quitAndInstall();
+      }
+    });
+  });
+
+  autoUpdater.checkForUpdates().catch((err) => {
+    console.error('[updater] startup auto-check failed:', err.message);
+  });
+}
+
+/** 手动触发更新检查（菜单入口）。 */
+function checkForUpdatesManually() {
+  if (!autoUpdater || !app.isPackaged) {
+    if (mainWindow) {
+      dialog.showMessageBox(mainWindow, {
+        type: 'info',
+        title: '检查更新',
+        message: '当前为开发模式，不支持更新检查',
+      });
+    }
+    return;
+  }
+  manualUpdateCheck = true;
+  if (mainWindow) {
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: '检查更新',
+      message: '正在检查更新…',
+    });
+  }
+  autoUpdater.checkForUpdates().catch((err) => {
+    console.error('[updater] manual check failed:', err.message);
+    manualUpdateCheck = false;
+    if (mainWindow) {
+      dialog.showMessageBox(mainWindow, {
+        type: 'error',
+        title: '检查更新失败',
+        message: '检查更新失败',
+        detail: err.message,
+      });
+    }
+  });
+}
+
+/** 设置应用菜单（含"检查更新"入口）。 */
+function setupAppMenu() {
+  const isMac = process.platform === 'darwin';
+  const template = [
+    ...(isMac ? [{ role: 'appMenu' }] : []),
+    {
+      label: '文件',
+      submenu: [isMac ? { role: 'close' } : { role: 'quit' }],
+    },
+    {
+      label: '帮助',
+      submenu: [
+        { label: '检查更新', click: () => checkForUpdatesManually() },
+      ],
+    },
+  ];
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
 app.whenReady().then(async () => {
   console.log('[electron] app.whenReady fired');
   const paths = getPaths();
@@ -468,6 +615,8 @@ app.whenReady().then(async () => {
     }
 
     loadFrontend();
+    setupAppMenu();
+    setupAutoUpdater();
   } catch (e) {
     console.error('[electron] backend failed to start:', e.message);
     loadErrorPage('后端健康检查超时', `${e.message}（已等待 ${BACKEND_READY_TIMEOUT_MS / 1000}s）`);

@@ -1,6 +1,6 @@
 {
   "name": "algolift-electron",
-  "version": "0.1.1",
+  "version": "0.1.16",
   "private": true,
   "description": "AlgoLift desktop application (Electron shell)",
   "main": "main.js",
@@ -8,6 +8,9 @@
     "start": "electron .",
     "dist": "node scripts/build.js",
     "rebuild": "node -e \"require('@electron/rebuild').rebuild({buildPath:'../backend',electronVersion:require('./package.json').devDependencies.electron,arch:process.arch,force:true,onlyModules:['bcrypt']})\""
+  },
+  "dependencies": {
+    "electron-updater": "6.8.9"
   },
   "devDependencies": {
     "@electron/rebuild": "4.2.0",
@@ -22,7 +25,8 @@
     },
     "files": [
       "main.js",
-      "preload.js"
+      "preload.js",
+      "node_modules/electron-updater/**/*"
     ],
     "extraResources": [
       {
@@ -50,6 +54,12 @@
         "to": "backend/.env"
       }
     ],
+    "publish": {
+      "provider": "generic",
+      "url": "https://releases.algolift.example.com/"
+    },
+    "artifactName": "${productName}-Setup-${version}.${ext}",
+    "generateUpdatesFilesForAllChannels": true,
     "win": {
       "target": "nsis"
     },
